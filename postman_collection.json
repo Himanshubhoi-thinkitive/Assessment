@@ -1,0 +1,421 @@
+{
+	"info": {
+		"_postman_id": "9d4a933b-f766-48f2-ad10-72e524931d38",
+		"name": "AI",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "45073658"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "Create Clinician",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.9"
+					},
+					{
+						"key": "Access-Control-Allow-Headers",
+						"value": "Origin, X-Requested-With, Content-Type, Accept"
+					},
+					{
+						"key": "Access-Control-Allow-Methods",
+						"value": "GET, POST, PUT, DELETE, OPTIONS"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJTaDVtMU12RmJ3U3FFc2FnWFZaOUdrbXFVX3VaTXhpbHBJMExNV2FCemlZIn0.eyJleHAiOjE3NTI4NTUzMjYsImlhdCI6MTc1MjgzMzcyNiwianRpIjoiZTdjM2VlMTctMmU3YS00OWZmLTgyYmEtYTg5NDY3NTE0ZjY2IiwiaXNzIjoiaHR0cDovLzMuODkuMjUwLjI6ODA5MC9yZWFsbXMvcWEiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNGUxMmNjZTEtNDU0NS00MmI2LWI5ZDktYjRkZWZlMDRmOTZjIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoianMtY2xpZW50Iiwic2lkIjoiOWY0Y2M2NjYtMWUwMi00NGY2LWFjZTUtZDM3ZTA0ZTFmMWRmIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJOQVZJR0FUT1IiLCJvZmZsaW5lX2FjY2VzcyIsIlBTWUNIT1RIRVJBUElTVCIsInVtYV9hdXRob3JpemF0aW9uIiwiRElSRUNUT1IiLCJkZWZhdWx0LXJvbGVzLXFhIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoidmFuZXNzYSBnYXl0b24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiIxNzg2NjY5ODc3NyIsImdpdmVuX25hbWUiOiJ2YW5lc3NhIiwiZmFtaWx5X25hbWUiOiJnYXl0b24iLCJlbWFpbCI6ImJoYXZuYS5hZGhhdisxM0B0aGlua2l0aXZlLmNvbSJ9.OhoUXupHUhhJa7rYVswG5expWZa_AtD8l0IqCOsfzJASXO9y9TX9-Jym4tYFNi4pLAkr5xewBlTXgU6XBXGDi11jDOCZBQHKO9Zlm8QY9Y4VrAh7xUETk_NsuIX4ENH2QcJMTS0pdtLzWxbKhYWmEyuP5pihr2o2bUgcC2VpwS_suvx641NEFoHfj18hp7lw7TTch78wDS4FXqZDNkuQAebAcOedrkaVnnQND5m7TV3qufWG-4CAsOhBsDQXJXk-1pzPIyk1MJnsJV1HWQKngftieZoJTxiLymDVF0IXOLMIUUbRVbHSpr4vaiTdva2sAyUs_NJ0IT7-f1GuWDuBxQ"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Origin",
+						"value": "https://qa.practiceeasily.com"
+					},
+					{
+						"key": "Referer",
+						"value": "https://qa.practiceeasily.com/"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "empty"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "cors"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "same-site"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"macOS\""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"firstName\":\"Sainath\",\"lastName\":\"Gaikwad\",\"emailId\":\"sainath.gaikwad+3@thinkitive.com\",\"contactNumber\":\"+11930567898\",\"npiNumber\":\"1230567876\",\"locationUuids\":[\"ed27ea30-fdfd-428c-8be5-47fb83cdf050\"],\"languagesSpoken\":[\"English\"],\"supervisorClinicianId\":\"46ae7e25-940c-43f7-863a-a351d43d6866\",\"roles\":[\"PSYCHOTHERAPIST\",\"FRONT_OFFICE_ADMIN\"],\"size\":10,\"page\":0,\"searchString\":\"\",\"email\":\"sainath.gaikwad+2@thinkitive.com\",\"archive\":false,\"supervisorClinicianName\":\"\",\"locationNames\":[]}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.qa.practiceeasily.com/api/master/clinician",
+					"protocol": "https",
+					"host": [
+						"api",
+						"qa",
+						"practiceeasily",
+						"com"
+					],
+					"path": [
+						"api",
+						"master",
+						"clinician"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update Clinician",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.9"
+					},
+					{
+						"key": "Access-Control-Allow-Headers",
+						"value": "Origin, X-Requested-With, Content-Type, Accept"
+					},
+					{
+						"key": "Access-Control-Allow-Methods",
+						"value": "GET, POST, PUT, DELETE, OPTIONS"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJTaDVtMU12RmJ3U3FFc2FnWFZaOUdrbXFVX3VaTXhpbHBJMExNV2FCemlZIn0.eyJleHAiOjE3NTI4NTUzMjYsImlhdCI6MTc1MjgzMzcyNiwianRpIjoiZTdjM2VlMTctMmU3YS00OWZmLTgyYmEtYTg5NDY3NTE0ZjY2IiwiaXNzIjoiaHR0cDovLzMuODkuMjUwLjI6ODA5MC9yZWFsbXMvcWEiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNGUxMmNjZTEtNDU0NS00MmI2LWI5ZDktYjRkZWZlMDRmOTZjIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoianMtY2xpZW50Iiwic2lkIjoiOWY0Y2M2NjYtMWUwMi00NGY2LWFjZTUtZDM3ZTA0ZTFmMWRmIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJOQVZJR0FUT1IiLCJvZmZsaW5lX2FjY2VzcyIsIlBTWUNIT1RIRVJBUElTVCIsInVtYV9hdXRob3JpemF0aW9uIiwiRElSRUNUT1IiLCJkZWZhdWx0LXJvbGVzLXFhIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoidmFuZXNzYSBnYXl0b24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiIxNzg2NjY5ODc3NyIsImdpdmVuX25hbWUiOiJ2YW5lc3NhIiwiZmFtaWx5X25hbWUiOiJnYXl0b24iLCJlbWFpbCI6ImJoYXZuYS5hZGhhdisxM0B0aGlua2l0aXZlLmNvbSJ9.OhoUXupHUhhJa7rYVswG5expWZa_AtD8l0IqCOsfzJASXO9y9TX9-Jym4tYFNi4pLAkr5xewBlTXgU6XBXGDi11jDOCZBQHKO9Zlm8QY9Y4VrAh7xUETk_NsuIX4ENH2QcJMTS0pdtLzWxbKhYWmEyuP5pihr2o2bUgcC2VpwS_suvx641NEFoHfj18hp7lw7TTch78wDS4FXqZDNkuQAebAcOedrkaVnnQND5m7TV3qufWG-4CAsOhBsDQXJXk-1pzPIyk1MJnsJV1HWQKngftieZoJTxiLymDVF0IXOLMIUUbRVbHSpr4vaiTdva2sAyUs_NJ0IT7-f1GuWDuBxQ"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Origin",
+						"value": "https://qa.practiceeasily.com"
+					},
+					{
+						"key": "Referer",
+						"value": "https://qa.practiceeasily.com/"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "empty"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "cors"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "same-site"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"macOS\""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"uuid\":\"fd1bc6e1-d669-4eee-98b0-521be724940d\",\"firstName\":\"Sainath\",\"lastName\":\"Gaikwad\",\"emailId\":\"sainath.gaikwad+5@thinkitive.com\",\"contactNumber\":\"+11230567898\",\"npiNumber\":\"1234567876\",\"locationUuids\":[\"ed27ea30-fdfd-428c-8be5-47fb83cdf050\"],\"languagesSpoken\":[\"English\"],\"supervisorClinicianId\":\"46ae7e25-940c-43f7-863a-a351d43d6866\",\"roles\":[\"FRONT_OFFICE_ADMIN\",\"PSYCHOTHERAPIST\"],\"size\":10,\"page\":0,\"searchString\":\"\",\"email\":\"sainath.gaikwad+5@thinkitive.com\",\"archive\":false,\"supervisorClinicianName\":\"\",\"locationNames\":[]}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.qa.practiceeasily.com/api/master/clinician",
+					"protocol": "https",
+					"host": [
+						"api",
+						"qa",
+						"practiceeasily",
+						"com"
+					],
+					"path": [
+						"api",
+						"master",
+						"clinician"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Archive clinician",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.9"
+					},
+					{
+						"key": "Access-Control-Allow-Headers",
+						"value": "Origin, X-Requested-With, Content-Type, Accept"
+					},
+					{
+						"key": "Access-Control-Allow-Methods",
+						"value": "GET, POST, PUT, DELETE, OPTIONS"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJTaDVtMU12RmJ3U3FFc2FnWFZaOUdrbXFVX3VaTXhpbHBJMExNV2FCemlZIn0.eyJleHAiOjE3NTI4NTUzMjYsImlhdCI6MTc1MjgzMzcyNiwianRpIjoiZTdjM2VlMTctMmU3YS00OWZmLTgyYmEtYTg5NDY3NTE0ZjY2IiwiaXNzIjoiaHR0cDovLzMuODkuMjUwLjI6ODA5MC9yZWFsbXMvcWEiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNGUxMmNjZTEtNDU0NS00MmI2LWI5ZDktYjRkZWZlMDRmOTZjIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoianMtY2xpZW50Iiwic2lkIjoiOWY0Y2M2NjYtMWUwMi00NGY2LWFjZTUtZDM3ZTA0ZTFmMWRmIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJOQVZJR0FUT1IiLCJvZmZsaW5lX2FjY2VzcyIsIlBTWUNIT1RIRVJBUElTVCIsInVtYV9hdXRob3JpemF0aW9uIiwiRElSRUNUT1IiLCJkZWZhdWx0LXJvbGVzLXFhIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoidmFuZXNzYSBnYXl0b24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiIxNzg2NjY5ODc3NyIsImdpdmVuX25hbWUiOiJ2YW5lc3NhIiwiZmFtaWx5X25hbWUiOiJnYXl0b24iLCJlbWFpbCI6ImJoYXZuYS5hZGhhdisxM0B0aGlua2l0aXZlLmNvbSJ9.OhoUXupHUhhJa7rYVswG5expWZa_AtD8l0IqCOsfzJASXO9y9TX9-Jym4tYFNi4pLAkr5xewBlTXgU6XBXGDi11jDOCZBQHKO9Zlm8QY9Y4VrAh7xUETk_NsuIX4ENH2QcJMTS0pdtLzWxbKhYWmEyuP5pihr2o2bUgcC2VpwS_suvx641NEFoHfj18hp7lw7TTch78wDS4FXqZDNkuQAebAcOedrkaVnnQND5m7TV3qufWG-4CAsOhBsDQXJXk-1pzPIyk1MJnsJV1HWQKngftieZoJTxiLymDVF0IXOLMIUUbRVbHSpr4vaiTdva2sAyUs_NJ0IT7-f1GuWDuBxQ"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Content-Length",
+						"value": "0"
+					},
+					{
+						"key": "Origin",
+						"value": "https://qa.practiceeasily.com"
+					},
+					{
+						"key": "Referer",
+						"value": "https://qa.practiceeasily.com/"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "empty"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "cors"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "same-site"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"macOS\""
+					}
+				],
+				"url": {
+					"raw": "https://api.qa.practiceeasily.com/api/master/clinician/archive-restore/d9bd33cf-b3b8-455c-8b86-3c5c4667b39a?flag=true",
+					"protocol": "https",
+					"host": [
+						"api",
+						"qa",
+						"practiceeasily",
+						"com"
+					],
+					"path": [
+						"api",
+						"master",
+						"clinician",
+						"archive-restore",
+						"d9bd33cf-b3b8-455c-8b86-3c5c4667b39a"
+					],
+					"query": [
+						{
+							"key": "flag",
+							"value": "true"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Clinician - Single",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json, text/plain, */*"
+					},
+					{
+						"key": "Accept-Language",
+						"value": "en-US,en;q=0.9"
+					},
+					{
+						"key": "Access-Control-Allow-Headers",
+						"value": "Origin, X-Requested-With, Content-Type, Accept"
+					},
+					{
+						"key": "Access-Control-Allow-Methods",
+						"value": "GET, POST, PUT, DELETE, OPTIONS"
+					},
+					{
+						"key": "Access-Control-Allow-Origin",
+						"value": "*"
+					},
+					{
+						"key": "Authorization",
+						"value": "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJTaDVtMU12RmJ3U3FFc2FnWFZaOUdrbXFVX3VaTXhpbHBJMExNV2FCemlZIn0.eyJleHAiOjE3NTI4NTUzMjYsImlhdCI6MTc1MjgzMzcyNiwianRpIjoiZTdjM2VlMTctMmU3YS00OWZmLTgyYmEtYTg5NDY3NTE0ZjY2IiwiaXNzIjoiaHR0cDovLzMuODkuMjUwLjI6ODA5MC9yZWFsbXMvcWEiLCJhdWQiOiJhY2NvdW50Iiwic3ViIjoiNGUxMmNjZTEtNDU0NS00MmI2LWI5ZDktYjRkZWZlMDRmOTZjIiwidHlwIjoiQmVhcmVyIiwiYXpwIjoianMtY2xpZW50Iiwic2lkIjoiOWY0Y2M2NjYtMWUwMi00NGY2LWFjZTUtZDM3ZTA0ZTFmMWRmIiwiYWNyIjoiMSIsImFsbG93ZWQtb3JpZ2lucyI6WyIqIl0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJOQVZJR0FUT1IiLCJvZmZsaW5lX2FjY2VzcyIsIlBTWUNIT1RIRVJBUElTVCIsInVtYV9hdXRob3JpemF0aW9uIiwiRElSRUNUT1IiLCJkZWZhdWx0LXJvbGVzLXFhIl19LCJyZXNvdXJjZV9hY2Nlc3MiOnsiYWNjb3VudCI6eyJyb2xlcyI6WyJtYW5hZ2UtYWNjb3VudCIsIm1hbmFnZS1hY2NvdW50LWxpbmtzIiwidmlldy1wcm9maWxlIl19fSwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoidmFuZXNzYSBnYXl0b24iLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiIxNzg2NjY5ODc3NyIsImdpdmVuX25hbWUiOiJ2YW5lc3NhIiwiZmFtaWx5X25hbWUiOiJnYXl0b24iLCJlbWFpbCI6ImJoYXZuYS5hZGhhdisxM0B0aGlua2l0aXZlLmNvbSJ9.OhoUXupHUhhJa7rYVswG5expWZa_AtD8l0IqCOsfzJASXO9y9TX9-Jym4tYFNi4pLAkr5xewBlTXgU6XBXGDi11jDOCZBQHKO9Zlm8QY9Y4VrAh7xUETk_NsuIX4ENH2QcJMTS0pdtLzWxbKhYWmEyuP5pihr2o2bUgcC2VpwS_suvx641NEFoHfj18hp7lw7TTch78wDS4FXqZDNkuQAebAcOedrkaVnnQND5m7TV3qufWG-4CAsOhBsDQXJXk-1pzPIyk1MJnsJV1HWQKngftieZoJTxiLymDVF0IXOLMIUUbRVbHSpr4vaiTdva2sAyUs_NJ0IT7-f1GuWDuBxQ"
+					},
+					{
+						"key": "Connection",
+						"value": "keep-alive"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					},
+					{
+						"key": "Origin",
+						"value": "https://qa.practiceeasily.com"
+					},
+					{
+						"key": "Referer",
+						"value": "https://qa.practiceeasily.com/"
+					},
+					{
+						"key": "Sec-Fetch-Dest",
+						"value": "empty"
+					},
+					{
+						"key": "Sec-Fetch-Mode",
+						"value": "cors"
+					},
+					{
+						"key": "Sec-Fetch-Site",
+						"value": "same-site"
+					},
+					{
+						"key": "User-Agent",
+						"value": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36"
+					},
+					{
+						"key": "sec-ch-ua",
+						"value": "\"Not)A;Brand\";v=\"8\", \"Chromium\";v=\"138\", \"Google Chrome\";v=\"138\""
+					},
+					{
+						"key": "sec-ch-ua-mobile",
+						"value": "?0"
+					},
+					{
+						"key": "sec-ch-ua-platform",
+						"value": "\"macOS\""
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"firstName\":\"Sainath\",\"lastName\":\"Gaikwad\",\"emailId\":\"sainath.gaikwad+99@thinkitive.com\",\"contactNumber\":\"+10986654324\",\"npiNumber\":\"9876563206\",\"locationUuids\":[\"52b3511b-8f14-4e1a-8465-f9c543a876fe\"],\"languagesSpoken\":[\"English\"],\"supervisorClinicianId\":\"46ae7e25-940c-43f7-863a-a351d43d6866\",\"roles\":[\"PSYCHOTHERAPIST\"],\"size\":10,\"page\":0,\"searchString\":\"\",\"email\":\"sainath.gaikwad+99@thinkitive.com\",\"archive\":false,\"supervisorClinicianName\":\"\",\"locationNames\":[]}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://api.qa.practiceeasily.com/api/master/clinician",
+					"protocol": "https",
+					"host": [
+						"api",
+						"qa",
+						"practiceeasily",
+						"com"
+					],
+					"path": [
+						"api",
+						"master",
+						"clinician"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
