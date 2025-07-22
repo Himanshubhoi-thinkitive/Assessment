@@ -39,7 +39,7 @@ test.describe('Login-Logout Functionality', () => {
     LOGIN_SUCCESS: 'You logged into a secure area!',
     LOGOUT_SUCCESS: 'You logged out of the secure area!',
     INVALID_USERNAME: 'Your username is invalid!',
-    INVALID_PASSWORD: 'Your password is invalid!',
+    INVALID_PASSWORD: 'Your password is incorrect Himanshu!',
     SECURE_AREA_TITLE: 'Secure Area',
     LOGIN_PAGE_TITLE: 'Login Page'
   };
