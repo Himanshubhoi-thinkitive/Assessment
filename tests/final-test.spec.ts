@@ -116,7 +116,7 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
 
   // 3. Set Availability with improved error handling
   await page.getByRole('tab', { name: 'Scheduling' }).click();
-  await page.waitForTimeout(2000); // Wait for tab to load
+  await page.waitForTimeout(2000);
   
   await page.getByText('Availability').click();
   await page.waitForTimeout(1000);
@@ -310,11 +310,11 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   const dayOptions = ['31', '30', '29', '28', '27', '26', '25', '24'];
   let daySelected = false;
   
-  for (const day of dayOptions) {
+  for (const dayOption of dayOptions) {
     try {
-      await page.getByRole('gridcell', { name: day }).click({ timeout: 2000 });
+      await page.getByRole('gridcell', { name: dayOption }).click({ timeout: 2000 });
       daySelected = true;
-      console.log(`✅ Selected day: ${day}`);
+      console.log(`✅ Selected day: ${dayOption}`);
       break;
     } catch (error) {
       continue;
@@ -325,7 +325,66 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
     throw new Error('Could not select any available day');
   }
   
-  await page.getByRole('button', { name: '06:15 AM - 06:45 AM' }).click();
+  // ENHANCED: Dynamic time slot selection - the key fix!
+  console.log('🕒 Looking for available time slots...');
+  await page.waitForTimeout(3000); // Wait for time slots to load
+  
+  // Try multiple time slot options
+  const timeSlotOptions = [
+    '06:15 AM - 06:45 AM',
+    '06:00 AM - 06:30 AM',
+    '07:00 AM - 07:30 AM',
+    '08:00 AM - 08:30 AM',
+    '09:00 AM - 09:30 AM',
+    '10:00 AM - 10:30 AM',
+    '12:00 PM - 12:30 PM',
+    '01:00 PM - 01:30 PM',
+    '02:00 PM - 02:30 PM'
+  ];
+  
+  let timeSlotSelected = false;
+  
+  for (const timeSlot of timeSlotOptions) {
+    try {
+      console.log(`Trying time slot: ${timeSlot}`);
+      const timeButton = page.getByRole('button', { name: timeSlot });
+      
+      if (await timeButton.isVisible({ timeout: 3000 })) {
+        await timeButton.click();
+        console.log(`✅ Selected time slot: ${timeSlot}`);
+        timeSlotSelected = true;
+        break;
+      }
+    } catch (error) {
+      console.log(`⚠️ Time slot ${timeSlot} not available`);
+      continue;
+    }
+  }
+  
+  // If no specific time slots work, try any available button with time format
+  if (!timeSlotSelected) {
+    console.log('🔍 Looking for any available time slot...');
+    try {
+      // Look for any button that contains "AM" or "PM" (time pattern)
+      const anyTimeSlot = page.locator('button').filter({ hasText: /\d{1,2}:\d{2}\s*(AM|PM)/ }).first();
+      
+      if (await anyTimeSlot.isVisible({ timeout: 5000 })) {
+        const timeSlotText = await anyTimeSlot.textContent();
+        await anyTimeSlot.click();
+        console.log(`✅ Selected available time slot: ${timeSlotText}`);
+        timeSlotSelected = true;
+      }
+    } catch (error) {
+      console.log('❌ Could not find any time slot');
+    }
+  }
+  
+  if (!timeSlotSelected) {
+    // Take a screenshot for debugging
+    await page.screenshot({ path: 'no-time-slots-available.png', fullPage: true });
+    throw new Error('No time slots are available for the selected day');
+  }
+  
   await page.getByRole('button', { name: 'Save And Close' }).click();
 
   console.log('🎉 Test completed successfully!');
