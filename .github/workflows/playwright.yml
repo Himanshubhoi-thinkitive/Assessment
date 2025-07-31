@@ -1,4 +1,4 @@
-name: Healthcare Provider Automation Tests
+name: Healthcare Provider Automation Tests - Optimized
 
 on:
   push:
@@ -25,33 +25,31 @@ env:
   PLAYWRIGHT_BROWSERS_PATH: 0
 
 jobs:
+  # Quick health check
   health-check:
-    name: Application Health Check
+    name: Health Check
     runs-on: ubuntu-latest
+    timeout-minutes: 2
     steps:
       - name: Check application status
         run: |
-          echo "🏥 Checking healthcare application..."
-          response=$(curl -s -o /dev/null -w "%{http_code}" https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login || echo "000")
-          if [ "$response" = "200" ] || [ "$response" = "302" ]; then
-            echo "✅ Application is accessible (HTTP $response)"
-          else
-            echo "⚠️ Application returned HTTP $response, continuing anyway"
-          fi
+          echo "🏥 Quick health check..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login || echo "000")
+          echo "Status: $response"
 
+  # Fast test execution
   test:
-    name: Healthcare Workflow Tests
+    name: Run Tests
     needs: health-check
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       matrix:
         browser: [chromium]
-        shard: [1/1] # Single shard for now to avoid complexity
     
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup Node.js
@@ -61,225 +59,120 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: |
-          npm ci
-          echo "✅ Dependencies installed"
+        run: npm ci --prefer-offline --no-audit --no-fund
 
-      - name: Install Playwright browsers
-        run: |
-          npx playwright install --with-deps ${{ matrix.browser }}
-          echo "✅ Playwright ${{ matrix.browser }} browser installed"
+      - name: Install Playwright
+        run: npx playwright install --with-deps chromium
 
-      - name: Run Healthcare Provider Tests
+      - name: Run Tests
         run: |
-          echo "🏥 Running healthcare provider workflow tests..."
-          
-          # Run tests with proper error handling
-          if npx playwright test --project=${{ matrix.browser }}; then
-            echo "✅ Tests completed successfully"
-          else
-            echo "❌ Tests failed, but continuing to generate reports"
-            exit_code=$?
-          fi
+          echo "🧪 Running tests..."
+          npx playwright test --project=${{ matrix.browser }} \
+            --reporter=blob,github \
+            --output=test-results/
         env:
           CI: true
 
-      - name: Generate HTML Report (Always)
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
         if: always()
+        with:
+          name: test-results-${{ matrix.browser }}
+          path: |
+            test-results/
+            blob-report/
+          retention-days: 7
+
+  # Separate fast HTML report generation
+  generate-report:
+    name: Generate Report
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Playwright
+        run: npm ci --prefer-offline --no-audit --no-fund
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+
+      - name: Generate HTML Report
         run: |
           echo "📊 Generating HTML report..."
-          
-          # Check if we have test results
-          if [ -d "test-results" ] && [ "$(ls -A test-results)" ]; then
-            echo "✅ Test results found, generating HTML report"
-            npx playwright show-report --host 0.0.0.0 > /dev/null 2>&1 &
-            sleep 2
-            pkill -f "playwright show-report" || true
-            
-            # Generate static HTML report
-            if [ -f "playwright-report/index.html" ]; then
-              echo "✅ HTML report generated successfully"
-            else
-              echo "⚠️ HTML report not found, creating simple report"
-              mkdir -p playwright-report
-              cat > playwright-report/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Healthcare Test Report</title>
-            <style>
-              body { font-family: Arial, sans-serif; margin: 40px; }
-              .header { color: #2d5aa0; }
-              .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
-              .passed { background-color: #d4edda; color: #155724; }
-              .failed { background-color: #f8d7da; color: #721c24; }
-            </style>
-          </head>
-          <body>
-            <h1 class="header">🏥 Healthcare Provider Automation Test Report</h1>
-            <div class="status failed">
-              <strong>Status:</strong> Tests encountered issues, but report was generated
-            </div>
-            <p><strong>Run Date:</strong> $(date)</p>
-            <p><strong>Browser:</strong> ${{ matrix.browser }}</p>
-            <h2>Next Steps:</h2>
-            <ul>
-              <li>Check the test artifacts for screenshots and videos</li>
-              <li>Review the console logs for detailed error information</li>
-              <li>Ensure all required test data is properly configured</li>
-            </ul>
-          </body>
-          </html>
-          EOF
-            fi
+          if [ -d "blob-report" ]; then
+            npx playwright merge-reports --reporter html ./blob-report
           else
-            echo "⚠️ No test results found"
+            echo "No blob reports found, creating basic report"
             mkdir -p playwright-report
             cat > playwright-report/index.html << 'EOF'
           <!DOCTYPE html>
           <html>
           <head>
-            <title>Healthcare Test Report - No Results</title>
+            <title>Healthcare Test Report</title>
+            <meta charset="utf-8">
             <style>
-              body { font-family: Arial, sans-serif; margin: 40px; }
-              .header { color: #2d5aa0; }
-              .warning { background-color: #fff3cd; color: #856404; padding: 15px; border-radius: 4px; }
-            </style>
-          </head>
-          <body>
-            <h1 class="header">🏥 Healthcare Provider Automation Test Report</h1>
-            <div class="warning">
-              <strong>⚠️ No test results were generated</strong><br>
-              This could indicate that tests failed to start or complete properly.
-            </div>
-            <p><strong>Run Date:</strong> $(date)</p>
-            <p><strong>Browser:</strong> ${{ matrix.browser }}</p>
-          </body>
-          </html>
-          EOF
-          fi
-
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: healthcare-test-results-${{ matrix.browser }}
-          path: |
-            test-results/
-            playwright-report/
-          retention-days: 14
-
-      - name: Upload failure screenshots
-        uses: actions/upload-artifact@v4
-        if: failure()
-        with:
-          name: failure-screenshots-${{ matrix.browser }}
-          path: |
-            **/*.png
-            **/*.webm
-            test-results/
-          retention-days: 7
-
-      - name: Test Results Summary
-        if: always()
-        run: |
-          echo "## 🏥 Healthcare Test Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Item | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Browser | ${{ matrix.browser }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Shard | ${{ matrix.shard }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Timestamp | $(date +'%Y-%m-%d %H:%M:%S UTC') |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          
-          if [ -d "test-results" ] && [ "$(ls -A test-results)" ]; then
-            echo "📊 **Test artifacts generated and uploaded**" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "⚠️ **No test artifacts found**" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "🔗 Check the **Actions** artifacts section for detailed reports, screenshots, and videos." >> $GITHUB_STEP_SUMMARY
-
-  deploy-report:
-    name: Deploy Report to GitHub Pages
-    needs: test
-    if: always() && github.ref == 'refs/heads/session-automation'
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download test artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: healthcare-test-results-chromium
-          path: ./downloaded-reports
-
-      - name: Prepare GitHub Pages content
-        run: |
-          mkdir -p ./pages-content
-          
-          if [ -d "./downloaded-reports/playwright-report" ]; then
-            cp -r ./downloaded-reports/playwright-report/* ./pages-content/
-            echo "✅ Copied Playwright HTML report"
-          else
-            # Create a simple index page
-            cat > ./pages-content/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <title>Healthcare Test Reports</title>
-            <style>
-              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 40px; background: #f8f9fa; }
-              .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-              .header { color: #2d5aa0; text-align: center; margin-bottom: 30px; }
-              .status { padding: 15px; margin: 20px 0; border-radius: 6px; text-align: center; }
-              .info { background-color: #e3f2fd; color: #1565c0; }
-              .link { color: #2d5aa0; text-decoration: none; font-weight: 500; }
-              .link:hover { text-decoration: underline; }
+              body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; margin: 40px; background: #f5f5f5; }
+              .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+              .header { color: #2563eb; margin-bottom: 20px; }
+              .status { padding: 15px; margin: 15px 0; border-radius: 6px; }
+              .info { background: #dbeafe; color: #1d4ed8; }
+              .timestamp { color: #6b7280; font-size: 14px; }
             </style>
           </head>
           <body>
             <div class="container">
-              <h1 class="header">🏥 Healthcare Provider Test Reports</h1>
+              <h1 class="header">🏥 Healthcare Test Report</h1>
               <div class="status info">
-                <strong>Reports are generated after each test run</strong><br>
-                Visit the <a href="https://github.com/Himanshubhoi-thinkitive/Assessment/actions" class="link">GitHub Actions</a> page to download detailed test artifacts.
+                <strong>Test execution completed</strong><br>
+                Check GitHub Actions for detailed logs and artifacts.
               </div>
-              <p><strong>Last Updated:</strong> $(date)</p>
-              <p><strong>Repository:</strong> <a href="https://github.com/Himanshubhoi-thinkitive/Assessment/tree/session-automation" class="link">session-automation branch</a></p>
+              <p class="timestamp">Generated: $(date -u)</p>
+              <p><strong>Repository:</strong> <a href="https://github.com/Himanshubhoi-thinkitive/Assessment">Healthcare Assessment</a></p>
             </div>
           </body>
           </html>
           EOF
-            echo "✅ Created fallback index page"
           fi
 
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: html-report
+          path: playwright-report/
+          retention-days: 14
+
       - name: Deploy to GitHub Pages
+        if: github.ref == 'refs/heads/session-automation'
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./pages-content
+          publish_dir: playwright-report/
           destination_dir: reports
 
+  # Simple notification
   notify:
-    name: Notification
-    needs: [test, deploy-report]
+    name: Results
+    needs: [test, generate-report]
     if: always()
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 1
     steps:
-      - name: Create notification summary
+      - name: Summary
         run: |
-          echo "🏥 **Healthcare Provider Test Suite Complete**" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Results:**" >> $GITHUB_STEP_SUMMARY
-          echo "- Test Job: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Deploy Job: ${{ needs.deploy-report.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Links:**" >> $GITHUB_STEP_SUMMARY
-          echo "- 📊 [Test Reports](https://himanshubhoi-thinkitive.github.io/Assessment/reports/)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🔧 [GitHub Actions](https://github.com/Himanshubhoi-thinkitive/Assessment/actions)" >> $GITHUB_STEP_SUMMARY
-          echo "- 📁 [Repository](https://github.com/Himanshubhoi-thinkitive/Assessment/tree/session-automation)" >> $GITHUB_STEP_SUMMARY
+          echo "🏥 **Healthcare Test Results**" >> $GITHUB_STEP_SUMMARY
+          echo "- Tests: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Report: ${{ needs.generate-report.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 [View Report](https://himanshubhoi-thinkitive.github.io/Assessment/reports/)" >> $GITHUB_STEP_SUMMARY

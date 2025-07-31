@@ -5,15 +5,16 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
+    "test:fast": "playwright test --reporter=line",
     "test:chromium": "playwright test --project=chromium",
     "test:headed": "playwright test --project=chromium --headed",
-    "test:headless": "playwright test --project=chromium --headless",
     "test:debug": "playwright test --project=chromium --debug",
     "test:ui": "playwright test --project=chromium --ui",
     "report": "playwright show-report",
-    "report:open": "playwright show-report --host 0.0.0.0 --port 9323",
-    "install:browsers": "playwright install --with-deps",
-    "install:chromium": "playwright install --with-deps chromium"
+    "report:merge": "playwright merge-reports --reporter html ./blob-report",
+    "install:browsers": "playwright install --with-deps chromium",
+    "ci:test": "playwright test --reporter=blob,github",
+    "ci:report": "playwright merge-reports --reporter html ./blob-report"
   },
   "keywords": [
     "playwright",
