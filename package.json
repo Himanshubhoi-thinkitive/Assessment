@@ -1,17 +1,20 @@
 {
   "name": "playwright_demo",
   "version": "1.0.0",
-  "description": "Playwright automation for Chromium session testing",
+  "description": "Playwright automation for healthcare provider workflow",
   "main": "index.js",
   "scripts": {
-    "test": "playwright test --project=chromium",
+    "test": "playwright test",
+    "test:chromium": "playwright test --project=chromium",
     "test:headed": "playwright test --project=chromium --headed",
+    "test:headless": "playwright test --project=chromium --headless",
     "test:ui": "playwright test --project=chromium --ui",
     "test:debug": "playwright test --project=chromium --debug",
+    "test:ci": "playwright test --project=chromium --headless",
     "report": "playwright show-report",
-    "install:browsers": "playwright install chromium"
+    "install:browsers": "playwright install --with-deps"
   },
-  "keywords": ["playwright", "automation", "testing", "chromium"],
+  "keywords": ["playwright", "automation", "testing", "healthcare"],
   "author": "Himanshubhoi-thinkitive",
   "license": "ISC",
   "type": "commonjs",
