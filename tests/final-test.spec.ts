@@ -1,147 +1,255 @@
 import { test, expect } from '@playwright/test';
-import Logger from '../utils/logger.js';
 
-// =========================
-// Utility Functions
-// =========================
-
-// Generates a random email for patient registration
-  function randomEmail() {
-    const chars = 'abcdefghijklmnopqrstuvwxyz';
-    let name = '';
-    for (let i = 0; i < 8; i++) {
-      name += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return `${name}${Math.floor(Math.random() * 10000)}@thinkitive.com`;
+// Utility functions for generating random data
+function generateRandomString(length: number = 8): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
+  return result;
+}
 
-// =========================
-// Auth Helpers
-// =========================
+function generateRandomNumber(min: number, max: number): number {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-/**
- * Logs in to the application using the provided page instance.
- */
-async function login(page) {
-  Logger.info('Navigating to login page');
-  await page.goto('https://stage_ketamin.uat.provider.ecarehealth.com/');
-  await page.goto('https://stage_ketamin.uat.provider.ecarehealth.com/auth/login');
-  await page.getByPlaceholder('Email').click();
-  await page.getByPlaceholder('Email').fill('amol.shete+TP@medarch.com');
-  await page.getByPlaceholder('Email').press('Tab');
-  await page.getByPlaceholder('*********').fill('Test@123$');
+function generateRandomDate(startYear: number = 1970, endYear: number = 2000): string {
+  const year = generateRandomNumber(startYear, endYear);
+  const month = generateRandomNumber(1, 12).toString().padStart(2, '0');
+  const day = generateRandomNumber(1, 28).toString().padStart(2, '0'); // Using 28 to avoid month/day issues
+  return `${month}-${day}-${year}`;
+}
+
+function generateRandomPhone(): string {
+  const areaCode = generateRandomNumber(200, 999);
+  const firstPart = generateRandomNumber(200, 999);
+  const secondPart = generateRandomNumber(1000, 9999);
+  return `(${areaCode}) ${firstPart}-${secondPart}`;
+}
+
+function generateRandomEmail(firstName: string, lastName: string): string {
+  const domains = ['mailor.com', 'testmail.com', 'example.com', 'tempmail.com'];
+  const domain = domains[Math.floor(Math.random() * domains.length)];
+  const randomSuffix = generateRandomNumber(100, 999);
+  return `${firstName.toLowerCase()}.${lastName.toLowerCase()}${randomSuffix}@${domain}`;
+}
+
+function generateNPINumber(): string {
+  // Generate a valid-looking 10-digit NPI number
+  return '1' + generateRandomNumber(100000000, 999999999).toString();
+}
+
+// Provider data generator
+function generateProviderData() {
+  const firstNames = ['Danny', 'Sarah', 'Michael', 'Jennifer', 'David', 'Lisa', 'Robert', 'Maria', 'John', 'Amanda'];
+  const lastNames = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez', 'Martinez'];
+  
+  const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+  
+  return {
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+    dateOfBirth: generateRandomDate(1970, 1990),
+    npiNumber: generateNPINumber(),
+    email: generateRandomEmail(firstName, lastName)
+  };
+}
+
+// Patient data generator
+function generatePatientData() {
+  const firstNames = ['Alex', 'Taylor', 'Jordan', 'Casey', 'Morgan', 'Riley', 'Avery', 'Cameron', 'Skyler', 'Quinn'];
+  const lastNames = ['Anderson', 'Thompson', 'White', 'Harris', 'Martin', 'Jackson', 'Clark', 'Lewis', 'Lee', 'Walker'];
+  
+  const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+  const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+  
+  return {
+    firstName,
+    lastName,
+    fullName: `${firstName} ${lastName}`,
+    dateOfBirth: generateRandomDate(1990, 2010),
+    mobileNumber: generateRandomPhone(),
+    email: generateRandomEmail(firstName, lastName)
+  };
+}
+
+test('Complete Healthcare Provider Workflow', async ({ page }) => {
+  // Generate unique data for this test run
+  const providerData = generateProviderData();
+  const patientData = generatePatientData();
+  
+  console.log('Generated Provider Data:', providerData);
+  console.log('Generated Patient Data:', patientData);
+
+  // 1. Login to the application
+  await page.goto('https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login');
+  await page.getByRole('textbox', { name: 'Email' }).click();
+  await page.getByRole('textbox', { name: 'Email' }).fill('rose.gomez@jourrapide.com');
+  await page.getByRole('textbox', { name: '*********' }).click();
+  await page.getByRole('textbox', { name: '*********' }).fill('Pass@123');
   await page.getByRole('button', { name: 'Let\'s get Started' }).click();
-  Logger.info('Logged in successfully');
-}
 
-/**
- * Logs out of the application using the provided page instance.
- */
-async function logout(page) {
-  Logger.info('Logging out');
-  await page.getByRole('img', { name: 'admin image' }).click();
-  await page.getByText('Log Out').click();
-  await page.getByRole('button', { name: 'Yes,Sure' }).click();
-  Logger.info('Logged out successfully');
-}
+  // 2. Create Provider - Navigate to User Settings and add a new provider
+  await page.getByRole('banner').getByTestId('KeyboardArrowRightIcon').click();
+  await page.getByRole('tab', { name: 'Settings' }).click();
+  await page.getByRole('menuitem', { name: 'User Settings' }).click();
+  await page.getByRole('tab', { name: 'Providers' }).click();
+  await page.getByRole('button', { name: 'Add Provider User' }).click();
 
-// =========================
-// Test 1: Patient Registration
-// =========================
-test.describe('Patient Registration - Mandatory Fields', () => {
-  test('example - should successfully register a new patient with mandatory fields', async ({ page }) => {
-    Logger.info('Starting patient registration test');
-    // Step 1: Login
-    await login(page);
-    // Step 2: Wait for dashboard to load
-    await page.waitForURL('**/scheduling/appointment');
-    Logger.info('Dashboard loaded');
-    // Step 3: Open Create > New Patient
-    await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click();
-    Logger.info('Clicked Create');
-    await page.getByRole('menuitem', { name: 'New Patient' }).click();
-    Logger.info('Selected New Patient');
-    await page.locator('div').filter({ hasText: /^Enter Patient Details$/ }).click();
-    Logger.info('Selected Enter Patient Details');
-    await page.getByRole('button', { name: 'Next' }).click();
-    Logger.info('Proceeded to patient details form');
-    // Step 4: Fill patient details
-    await page.getByRole('textbox', { name: 'First Name *' }).fill('Jonny');
-    await page.getByRole('textbox', { name: 'Last Name *' }).fill('Das');
-    await page.getByRole('textbox', { name: 'Date Of Birth *' }).fill('01-01-2001');
-    await page.locator('form').filter({ hasText: 'Gender *Gender *' }).getByLabel('Open').click();
-    await page.getByRole('option', { name: 'Male', exact: true }).click();
-    await page.getByRole('textbox', { name: 'Mobile Number *' }).fill('9373908888');
-    // Use a random email for each run
-    const email = randomEmail();
-    await page.getByRole('textbox', { name: 'Email *' }).fill(email);
-    Logger.info('Filled patient details');
-    // Step 5: Save patient
-    await page.getByRole('button', { name: 'Save' }).click();
-    Logger.info('Clicked Save');
-    // Step 6: Verify patient creation
-    await expect(page.locator('text=Patient Details Added Successfully')).toBeVisible();
-    Logger.info('Verified patient creation success message');
-    await page.waitForURL('**/patients');
-    await expect(page.getByRole('tab', { name: 'Patients', selected: true })).toBeVisible();
-    Logger.info('Verified navigation to patients page');
-    // Optionally: Check for success message again
-    // await expect(page.getByText('Patient Details Added Successfully.')).toBeVisible();
-    // Optionally: Logout if needed
-    // await logout(page);
-  });
-});
+  // Fill provider details with generated data
+  await page.getByRole('textbox', { name: 'First Name *' }).click();
+  await page.getByRole('textbox', { name: 'First Name *' }).fill(providerData.firstName);
+  await page.getByRole('paragraph').filter({ hasText: 'Last Name' }).click();
+  await page.getByRole('textbox', { name: 'Last Name *' }).fill(providerData.lastName);
+  await page.getByRole('combobox', { name: 'Provider Type' }).click();
+  await page.getByRole('option', { name: 'PSYD' }).click();
+  await page.getByRole('combobox', { name: 'specialities' }).click();
+  await page.getByRole('option', { name: 'Cardiology' }).click();
+  await page.getByRole('combobox', { name: 'Role *' }).click();
+  await page.getByRole('option', { name: 'Provider' }).click();
+  await page.getByRole('textbox', { name: 'DOB' }).click();
+  await page.getByRole('textbox', { name: 'DOB' }).fill(providerData.dateOfBirth);
+  await page.getByRole('combobox', { name: 'Gender *' }).click();
+  await page.getByRole('option', { name: 'Male', exact: true }).click();
+  await page.getByRole('textbox', { name: 'NPI Number', exact: true }).click();
+  await page.getByRole('textbox', { name: 'NPI Number', exact: true }).fill(providerData.npiNumber);
+  await page.getByRole('textbox', { name: 'Email *' }).click();
+  await page.getByRole('textbox', { name: 'Email *' }).fill(providerData.email);
+  await page.getByRole('button', { name: 'Save' }).click();
 
-// =========================
-// Test 2: Appointment Booking
-// =========================
+  // Wait for provider creation confirmation
+  await page.waitForTimeout(2000);
 
-test('demo - appointment booking', async ({ page }) => {
-  Logger.info('Starting appointment booking test');
-  // Step 1: Login
-  await login(page);
-  // Step 2: Open appointment creation
-  await page.getByText('Create').click();
-  Logger.info('Clicked Create');
-  await page.getByRole('menuitem', { name: 'New Appointment' }).locator('div').click();
-  Logger.info('Selected New Appointment');
-  // Step 3: Search and select patient
-  await page.getByPlaceholder('Search Patient').click();
-  await page.getByPlaceholder('Search Patient').fill('Jonny Das'); // Update this to use a dynamic name if needed
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  Logger.info('Selected patient for appointment');
-  // Step 4: Select appointment type
-  await page.getByPlaceholder('Select Type').click();
+  // 3. Set Availability - Navigate to Scheduling and set up availability
+  await page.getByRole('tab', { name: 'Scheduling' }).click();
+  await page.getByText('Availability').click();
+  await page.getByRole('button', { name: 'Edit Availability' }).click();
+
+  // Set provider and basic settings
+  await page.locator('form').filter({ hasText: 'Select Provider *Select' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: providerData.fullName }).click();
+  await page.locator('form').filter({ hasText: 'Time Zone *Time Zone *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: 'Alaska Standard Time (UTC -9)' }).click();
+  await page.locator('form').filter({ hasText: 'Booking Window *Booking' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '1 Week' }).click();
+
+  // Set Monday availability
+  await page.getByRole('tab', { name: 'Monday' }).click();
+  await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '12:00 AM' }).click();
+  await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
+  await page.getByRole('checkbox', { name: 'Telehealth' }).check();
+
+  // Set Tuesday availability
+  await page.getByRole('tab', { name: 'Tuesday' }).click();
+  await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '12:00 AM' }).click();
+  await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
+  await page.getByRole('checkbox', { name: 'Telehealth' }).check();
+
+  // Set Wednesday availability
+  await page.getByRole('tab', { name: 'Wednesday' }).click();
+  await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '12:00 AM' }).click();
+  await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
+  await page.getByRole('checkbox', { name: 'Telehealth' }).check();
+
+  // Set Thursday availability
+  await page.getByRole('tab', { name: 'Thursday' }).click();
+  await page.locator('div').filter({ hasText: /^Start Time \*$/ }).nth(1).click();
+  await page.getByRole('option', { name: '12:00 AM' }).click();
+  await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
+  await page.getByRole('checkbox', { name: 'Telehealth' }).check();
+
+  // Set Friday availability
+  await page.getByRole('tab', { name: 'Friday' }).click();
+  await page.locator('div').filter({ hasText: /^Start Time \*$/ }).nth(1).click();
+  await page.getByRole('option', { name: '12:00 AM' }).click();
+  await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
+  await page.getByRole('checkbox', { name: 'Telehealth' }).check();
+
+  // Set appointment type and duration settings
+  await page.locator('form').filter({ hasText: 'Appointment TypeAppointment' }).getByLabel('Open').click();
   await page.getByRole('option', { name: 'New Patient Visit' }).click();
-  Logger.info('Selected appointment type');
-  // Step 5: Fill reason and select timezone
-  await page.getByPlaceholder('Reason').click();
-  await page.getByPlaceholder('Reason').fill('Fever');
-  Logger.info('Filled reason for visit');
-  await page.getByLabel('Timezone *').click();
-  await page.getByRole('option', { name: 'Central Standard Time (GMT -06:00)' }).click();
-  await page.getByLabel('Timezone *').click();
-  await page.getByRole('option', { name: 'Alaska Daylight Time (GMT -08:00)' }).click();
-  Logger.info('Selected timezone');
-  // Step 6: Select visit type and provider
+  await page.locator('form').filter({ hasText: 'DurationDuration' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '30 minutes' }).click();
+  await page.locator('form').filter({ hasText: 'Schedule NoticeSchedule Notice' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: '1 Hours Away' }).click();
+
+  // Save availability settings
+  await page.getByRole('button', { name: 'Save' }).click();
+  
+  // Wait for availability save confirmation
+  await page.waitForTimeout(2000);
+
+  // 4. Patient Creation - Create a new patient
+  await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click();
+  await page.getByText('New Patient', { exact: true }).click();
+  await page.locator('div').filter({ hasText: /^Enter Patient Details$/ }).getByRole('img').click();
+  await page.getByRole('button', { name: 'Next' }).click();
+
+  // Fill patient details with generated data
+  await page.locator('form').filter({ hasText: 'Provider Group' }).getByLabel('Open').click();
+  await page.getByRole('textbox', { name: 'First Name *' }).click();
+  await page.getByRole('textbox', { name: 'First Name *' }).fill(patientData.firstName);
+  await page.getByRole('textbox', { name: 'Last Name *' }).click();
+  await page.getByRole('textbox', { name: 'Last Name *' }).fill(patientData.lastName);
+  await page.getByRole('textbox', { name: 'Date Of Birth *' }).click();
+  await page.getByRole('textbox', { name: 'Date Of Birth *' }).fill(patientData.dateOfBirth);
+  await page.getByRole('combobox', { name: 'Gender *' }).click();
+  await page.getByRole('option', { name: 'Male', exact: true }).click();
+  await page.locator('form').filter({ hasText: 'Time Zone *Time Zone *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: 'Alaska Standard Time (UTC -9)' }).click();
+  await page.getByRole('textbox', { name: 'Mobile Number *' }).click();
+  await page.getByRole('textbox', { name: 'Mobile Number *' }).fill(patientData.mobileNumber);
+  await page.getByRole('textbox', { name: 'Email *' }).click();
+  await page.getByRole('textbox', { name: 'Email *' }).fill(patientData.email);
+  await page.getByRole('button', { name: 'Save' }).click();
+
+  // Wait for patient creation confirmation
+  await page.waitForTimeout(2000);
+
+  // 5. Appointment Booking - Create a new appointment for the patient
+  await page.getByRole('banner').getByTestId('ExpandMoreIcon').click();
+  await page.getByText('New Appointment').click();
+
+  // Fill appointment details
+  await page.getByRole('combobox', { name: 'Patient Name *' }).click();
+  
+  // Wait for patient option to be available and select it
+  await page.waitForTimeout(1000);
+  const patientOptionText = `${patientData.firstName} ${patientData.lastName}`;
+  await page.getByRole('option', { name: new RegExp(patientOptionText, 'i') }).first().click();
+  
+  await page.getByRole('combobox', { name: 'Appointment Type *' }).click();
+  await page.getByRole('option', { name: 'New Patient Visit' }).click();
+  await page.getByRole('textbox', { name: 'Reason For Visit *' }).click();
+  await page.getByRole('textbox', { name: 'Reason For Visit *' }).fill('Fever');
+  await page.locator('form').filter({ hasText: 'Timezone *Timezone *' }).getByLabel('Open').click();
+  await page.getByRole('option', { name: 'Alaska Standard Time (GMT -09' }).click();
   await page.getByRole('button', { name: 'Telehealth' }).click();
-  await page.getByPlaceholder('Search Provider').click();
-  await page.getByPlaceholder('Search Provider').fill('emil');
-  await page.getByRole('option', { name: 'Emily Carter' }).click();
-  Logger.info('Selected provider');
-  // Step 7: View availability and select slot
+
+  // Select provider and schedule appointment
+  await page.getByRole('combobox', { name: 'Provider *' }).click();
+  await page.getByRole('option', { name: providerData.fullName }).click();
+  await page.getByRole('button', { name: 'View availability' }).click({
+    button: 'right'
+  });
   await page.getByRole('button', { name: 'View availability' }).click();
-  Logger.info('Viewing availability');
-  // Dynamically select tomorrow's date
-  const today = new Date();
-  const tomorrow = today.getDate() + 2;
-  await page.getByRole('gridcell', { name: String(tomorrow), exact: true }).click();
-  Logger.info(`Selected date: ${tomorrow}`);
-  await page.locator("xpath=(//div[@class='MuiBox-root css-q6ik5y'])[1]").click();
-  Logger.info('Selected time slot');
-  // Step 8: Save appointment and log out
+  await page.getByRole('gridcell', { name: '24' }).click();
+  await page.getByRole('button', { name: '06:15 AM - 06:45 AM' }).click();
   await page.getByRole('button', { name: 'Save And Close' }).click();
-  Logger.info('Saved appointment');
-  await logout(page);
+
+  // Log the generated data for reference
+  console.log('Test completed successfully with:');
+  console.log(`Provider: ${providerData.fullName} (Email: ${providerData.email})`);
+  console.log(`Patient: ${patientData.fullName} (Email: ${patientData.email})`);
 });
