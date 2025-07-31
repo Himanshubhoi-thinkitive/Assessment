@@ -1,11 +1,18 @@
 {
   "name": "playwright_demo",
   "version": "1.0.0",
-  "description": "",
+  "description": "Playwright automation for Chromium session testing",
   "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
+  "scripts": {
+    "test": "playwright test --project=chromium",
+    "test:headed": "playwright test --project=chromium --headed",
+    "test:ui": "playwright test --project=chromium --ui",
+    "test:debug": "playwright test --project=chromium --debug",
+    "report": "playwright show-report",
+    "install:browsers": "playwright install chromium"
+  },
+  "keywords": ["playwright", "automation", "testing", "chromium"],
+  "author": "Himanshubhoi-thinkitive",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
