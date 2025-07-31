@@ -1,25 +1,36 @@
 {
-  "name": "playwright_demo",
+  "name": "healthcare-automation",
   "version": "1.0.0",
-  "description": "Playwright automation for healthcare provider workflow",
+  "description": "Healthcare Provider Workflow Automation with Playwright",
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
     "test:chromium": "playwright test --project=chromium",
     "test:headed": "playwright test --project=chromium --headed",
     "test:headless": "playwright test --project=chromium --headless",
-    "test:ui": "playwright test --project=chromium --ui",
     "test:debug": "playwright test --project=chromium --debug",
-    "test:ci": "playwright test --project=chromium --headless",
+    "test:ui": "playwright test --project=chromium --ui",
     "report": "playwright show-report",
-    "install:browsers": "playwright install --with-deps"
+    "report:open": "playwright show-report --host 0.0.0.0 --port 9323",
+    "install:browsers": "playwright install --with-deps",
+    "install:chromium": "playwright install --with-deps chromium"
   },
-  "keywords": ["playwright", "automation", "testing", "healthcare"],
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "healthcare",
+    "e2e",
+    "ci/cd"
+  ],
   "author": "Himanshubhoi-thinkitive",
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.54.1",
     "@types/node": "^24.0.13"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

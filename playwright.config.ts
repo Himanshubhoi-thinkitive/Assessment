@@ -14,12 +14,13 @@ export default defineConfig({
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   
-  /* Reporter configuration for CI */
-  reporter: [
-    ['html'],
-    ['junit', { outputFile: 'test-results/junit.xml' }],
-    ['json', { outputFile: 'test-results/results.json' }],
-    process.env.CI ? ['github'] : ['list']
+  /* Reporter configuration for CI with blob support */
+  reporter: process.env.CI ? [
+    ['blob'],  // Generate blob reports for CI merging
+    ['github'], // GitHub annotations
+  ] : [
+    ['html'],   // HTML reports for local development
+    ['list'],   // Console output for local development
   ],
   
   /* Global test timeout - increased for healthcare workflows */
