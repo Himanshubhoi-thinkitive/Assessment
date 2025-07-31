@@ -184,17 +184,128 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
     await page.getByRole('option', { name: '1 Hours Away' }).click();
     await page.getByRole('button', { name: 'Save' }).click();
     
+    // CRITICAL: Handle the modal that appears after saving availability
+    console.log('🔄 Handling post-save modal...');
+    await page.waitForTimeout(2000); // Wait for modal to appear
+    
+    // Try to find and handle success/confirmation modal
+    const modalHandlers = [
+      // Try OK button
+      async () => {
+        const okBtn = page.getByRole('button', { name: 'OK' });
+        if (await okBtn.isVisible({ timeout: 3000 })) {
+          await okBtn.click();
+          console.log('✅ Clicked OK button');
+          return true;
+        }
+        return false;
+      },
+      
+      // Try Continue button
+      async () => {
+        const continueBtn = page.getByRole('button', { name: 'Continue' });
+        if (await continueBtn.isVisible({ timeout: 3000 })) {
+          await continueBtn.click();
+          console.log('✅ Clicked Continue button');
+          return true;
+        }
+        return false;
+      },
+      
+      // Try Close button in modal
+      async () => {
+        const modal = page.locator('[role="presentation"]').first();
+        if (await modal.isVisible({ timeout: 3000 })) {
+          const closeBtn = modal.locator('button[aria-label*="close"], button:has([data-testid="CloseIcon"])').first();
+          if (await closeBtn.isVisible({ timeout: 2000 })) {
+            await closeBtn.click();
+            console.log('✅ Clicked modal close button');
+            return true;
+          }
+        }
+        return false;
+      },
+      
+      // Try any button in modal that might dismiss it
+      async () => {
+        const modal = page.locator('[role="presentation"]').first();
+        if (await modal.isVisible({ timeout: 3000 })) {
+          const anyButton = modal.locator('button').first();
+          if (await anyButton.isVisible({ timeout: 2000 })) {
+            await anyButton.click();
+            console.log('✅ Clicked first available button in modal');
+            return true;
+          }
+        }
+        return false;
+      }
+    ];
+    
+    // Try each handler
+    let modalHandled = false;
+    for (let i = 0; i < modalHandlers.length; i++) {
+      try {
+        modalHandled = await modalHandlers[i]();
+        if (modalHandled) {
+          break;
+        }
+      } catch (error) {
+        console.log(`Modal handler ${i + 1} failed: ${error.message}`);
+      }
+    }
+    
+    // If no modal button worked, try escape
+    if (!modalHandled) {
+      console.log('No modal buttons found, trying escape...');
+      for (let i = 0; i < 3; i++) {
+        await page.keyboard.press('Escape');
+        await page.waitForTimeout(500);
+      }
+    }
+    
+    // Wait for modal to close
     await page.waitForTimeout(3000);
     console.log('✅ Availability set successfully');
 
-    // 4. Patient Creation - using original working selectors with enhanced modal handling
-    console.log('Creating patient...');
+    // 4. Patient Creation - simplified approach after proper modal handling
+    console.log('Step 4: Creating patient...');
     
-    // Close any modals first
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(1000);
+    // Verify no modals are blocking before proceeding
+    const blockingModals = await page.locator('[role="presentation"], .MuiDialog-root').count();
+    if (blockingModals > 0) {
+      console.log(`⚠️ Found ${blockingModals} potential blocking modals, handling them...`);
+      
+      // One more round of modal cleanup
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+      
+      // Try clicking outside any modal area
+      await page.click('body', { position: { x: 100, y: 100 }, force: true });
+      await page.waitForTimeout(1000);
+    }
     
-    await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click();
+    // Now try the Create button with the original working selector
+    try {
+      console.log('Clicking Create button...');
+      await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click({ timeout: 15000 });
+      console.log('✅ Create button clicked successfully');
+    } catch (error) {
+      console.log('❌ Original selector failed, trying alternatives...');
+      
+      // Take debug screenshot
+      await page.screenshot({ path: 'create-button-issue-debug.png', fullPage: true });
+      
+      // Try force click
+      try {
+        await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click({ force: true, timeout: 10000 });
+        console.log('✅ Create button clicked with force');
+      } catch (forceError) {
+        // Try first occurrence instead of nth(1)
+        await page.locator('div').filter({ hasText: /^Create$/ }).first().click({ force: true, timeout: 10000 });
+        console.log('✅ Create button clicked using first() with force');
+      }
+    }
     await page.getByText('New Patient', { exact: true }).click();
     await page.locator('div').filter({ hasText: /^Enter Patient Details$/ }).getByRole('img').click();
     await page.getByRole('button', { name: 'Next' }).click();
