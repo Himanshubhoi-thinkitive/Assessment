@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Utility functions for generating random data
+// Simple data generation functions
 function generateRandomNumber(min: number, max: number): number {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
@@ -30,6 +30,7 @@ function generateNPINumber(): string {
   return generateRandomNumber(1000000000, 9999999999).toString();
 }
 
+// Generate provider data
 function generateProviderData() {
   const firstNames = ['Danny', 'Sarah', 'Michael', 'Jennifer', 'David', 'Lisa', 'Robert', 'Maria', 'John', 'Amanda'];
   const lastNames = ['Defy', 'Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis', 'Rodriguez'];
@@ -47,6 +48,7 @@ function generateProviderData() {
   };
 }
 
+// Generate patient data
 function generatePatientData() {
   const firstNames = ['Shubh', 'Alex', 'Taylor', 'Jordan', 'Casey', 'Morgan', 'Riley', 'Avery', 'Cameron', 'Skyler'];
   const lastNames = ['Singu', 'Anderson', 'Thompson', 'White', 'Harris', 'Martin', 'Jackson', 'Clark', 'Lewis', 'Lee'];
@@ -65,14 +67,14 @@ function generatePatientData() {
 }
 
 test('Complete Healthcare Provider Workflow', async ({ page }) => {
-  // Generate dynamic data for this test run
-  const providerData = generateProviderData();
-  const patientData = generatePatientData();
+  // Generate dynamic data
+  const provider = generateProviderData();
+  const patient = generatePatientData();
   
-  console.log('🎭 Generated Provider Data:', providerData);
-  console.log('👤 Generated Patient Data:', patientData);
+  console.log('Generated Provider:', provider);
+  console.log('Generated Patient:', patient);
 
-  // 1. Login to the application
+  // 1. Login to the application (EXACT COPY of your working code)
   await page.goto('https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login');
   await page.getByRole('textbox', { name: 'Email' }).click();
   await page.getByRole('textbox', { name: 'Email' }).fill('rose.gomez@jourrapide.com');
@@ -80,18 +82,18 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('textbox', { name: '*********' }).fill('Pass@123');
   await page.getByRole('button', { name: 'Let\'s get Started' }).click();
 
-  // 2. Create Provider
+  // 2. Create Provider (EXACT COPY with dynamic data in .fill() only)
   await page.getByRole('banner').getByTestId('KeyboardArrowRightIcon').click();
   await page.getByRole('tab', { name: 'Settings' }).click();
   await page.getByRole('menuitem', { name: 'User Settings' }).click();
   await page.getByRole('tab', { name: 'Providers' }).click();
   await page.getByRole('button', { name: 'Add Provider User' }).click();
 
-  // Fill provider details with generated data
+  // Fill provider details - ONLY changed the .fill() values
   await page.getByRole('textbox', { name: 'First Name *' }).click();
-  await page.getByRole('textbox', { name: 'First Name *' }).fill(providerData.firstName);
+  await page.getByRole('textbox', { name: 'First Name *' }).fill(provider.firstName); // Changed
   await page.getByRole('paragraph').filter({ hasText: 'Last Name' }).click();
-  await page.getByRole('textbox', { name: 'Last Name *' }).fill(providerData.lastName);
+  await page.getByRole('textbox', { name: 'Last Name *' }).fill(provider.lastName); // Changed
   await page.getByRole('combobox', { name: 'Provider Type' }).click();
   await page.getByRole('option', { name: 'PSYD' }).click();
   await page.getByRole('combobox', { name: 'specialities' }).click();
@@ -99,89 +101,69 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('combobox', { name: 'Role *' }).click();
   await page.getByRole('option', { name: 'Provider' }).click();
   await page.getByRole('textbox', { name: 'DOB' }).click();
-  await page.getByRole('textbox', { name: 'DOB' }).fill(providerData.dateOfBirth);
+  await page.getByRole('textbox', { name: 'DOB' }).fill(provider.dateOfBirth); // Changed
   await page.getByRole('combobox', { name: 'Gender *' }).click();
   await page.getByRole('option', { name: 'Male', exact: true }).click();
   await page.getByRole('textbox', { name: 'NPI Number', exact: true }).click();
-  await page.getByRole('textbox', { name: 'NPI Number', exact: true }).fill(providerData.npiNumber);
+  await page.getByRole('textbox', { name: 'NPI Number', exact: true }).fill(provider.npiNumber); // Changed
   await page.getByRole('textbox', { name: 'Email *' }).click();
-  await page.getByRole('textbox', { name: 'Email *' }).fill(providerData.email);
+  await page.getByRole('textbox', { name: 'Email *' }).fill(provider.email); // Changed
   await page.getByRole('button', { name: 'Save' }).click();
 
-  // 3. Set Availability
+  // 3. Set Availability (EXACT COPY with dynamic provider name)
   await page.getByRole('tab', { name: 'Scheduling' }).click();
   await page.getByText('Availability').click();
   await page.getByRole('button', { name: 'Edit Availability' }).click();
 
   // Set provider and basic settings
   await page.locator('form').filter({ hasText: 'Select Provider *Select' }).getByLabel('Open').click();
-  await page.getByRole('option', { name: providerData.fullName }).first().click(); // Use .first() to handle duplicates
+  await page.getByRole('option', { name: provider.fullName }).click(); // Changed
   await page.locator('form').filter({ hasText: 'Time Zone *Time Zone *' }).getByLabel('Open').click();
   await page.getByRole('option', { name: 'Alaska Standard Time (UTC -9)' }).click();
   await page.locator('form').filter({ hasText: 'Booking Window *Booking' }).getByLabel('Open').click();
   await page.getByRole('option', { name: '1 Week' }).click();
 
-  // Set Monday availability - simplified
+  // Set Monday availability (EXACT COPY)
   await page.getByRole('tab', { name: 'Monday' }).click();
   await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
   await page.getByRole('option', { name: '12:00 AM' }).click();
   await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
-  try {
-    await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click({ timeout: 5000 });
-  } catch {
-    await page.getByRole('option', { name: '08:00 AM (8 hrs)' }).click();
-  }
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
   await page.getByRole('checkbox', { name: 'Telehealth' }).check();
 
-  // Set Tuesday availability - simplified
+  // Set Tuesday availability (EXACT COPY)
   await page.getByRole('tab', { name: 'Tuesday' }).click();
   await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
   await page.getByRole('option', { name: '12:00 AM' }).click();
   await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
-  try {
-    await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click({ timeout: 5000 });
-  } catch {
-    await page.getByRole('option', { name: '08:00 AM (8 hrs)' }).click();
-  }
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
   await page.getByRole('checkbox', { name: 'Telehealth' }).check();
 
-  // Set Wednesday availability - simplified
+  // Set Wednesday availability (EXACT COPY)
   await page.getByRole('tab', { name: 'Wednesday' }).click();
   await page.locator('form').filter({ hasText: 'Start Time *Start Time *' }).getByLabel('Open').click();
   await page.getByRole('option', { name: '12:00 AM' }).click();
   await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
-  try {
-    await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click({ timeout: 5000 });
-  } catch {
-    await page.getByRole('option', { name: '08:00 AM (8 hrs)' }).click();
-  }
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
   await page.getByRole('checkbox', { name: 'Telehealth' }).check();
 
-  // Set Thursday availability - simplified
+  // Set Thursday availability (EXACT COPY)
   await page.getByRole('tab', { name: 'Thursday' }).click();
   await page.locator('div').filter({ hasText: /^Start Time \*$/ }).nth(1).click();
   await page.getByRole('option', { name: '12:00 AM' }).click();
   await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
-  try {
-    await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click({ timeout: 5000 });
-  } catch {
-    await page.getByRole('option', { name: '08:00 AM (8 hrs)' }).click();
-  }
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
   await page.getByRole('checkbox', { name: 'Telehealth' }).check();
 
-  // Set Friday availability - simplified
+  // Set Friday availability (EXACT COPY)
   await page.getByRole('tab', { name: 'Friday' }).click();
   await page.locator('div').filter({ hasText: /^Start Time \*$/ }).nth(1).click();
   await page.getByRole('option', { name: '12:00 AM' }).click();
   await page.locator('form').filter({ hasText: 'End Time *End Time *' }).getByLabel('Open').click();
-  try {
-    await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click({ timeout: 5000 });
-  } catch {
-    await page.getByRole('option', { name: '08:00 AM (8 hrs)' }).click();
-  }
+  await page.getByRole('option', { name: ':00 AM (8 hrs)' }).click();
   await page.getByRole('checkbox', { name: 'Telehealth' }).check();
 
-  // Set appointment type and duration settings
+  // Set appointment type and duration settings (EXACT COPY)
   await page.locator('form').filter({ hasText: 'Appointment TypeAppointment' }).getByLabel('Open').click();
   await page.getByRole('option', { name: 'New Patient Visit' }).click();
   await page.locator('form').filter({ hasText: 'DurationDuration' }).getByLabel('Open').click();
@@ -189,84 +171,48 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.locator('form').filter({ hasText: 'Schedule NoticeSchedule Notice' }).getByLabel('Open').click();
   await page.getByRole('option', { name: '1 Hours Away' }).click();
 
-  // Save availability settings
+  // Save availability settings (EXACT COPY)
   await page.getByRole('button', { name: 'Save' }).click();
-  
-  // CRITICAL: Handle the modal that appears after saving
-  await page.waitForTimeout(3000); // Wait for modal to appear
-  
-  // Try to handle success modal
-  try {
-    const okButton = page.getByRole('button', { name: 'OK' });
-    if (await okButton.isVisible({ timeout: 3000 })) {
-      await okButton.click();
-      console.log('✅ Clicked OK to close success modal');
-    }
-  } catch (e1) {
-    try {
-      const closeButton = page.locator('[role="presentation"] button[aria-label*="close"]').first();
-      if (await closeButton.isVisible({ timeout: 2000 })) {
-        await closeButton.click();
-        console.log('✅ Clicked close button to close modal');
-      }
-    } catch (e2) {
-      // Final fallback: multiple escapes
-      await page.keyboard.press('Escape');
-      await page.keyboard.press('Escape');
-      console.log('✅ Used Escape to close modal');
-    }
-  }
-  
-  // Wait for modal to fully close
-  await page.waitForTimeout(2000);
 
-  // 4. Patient Creation - YOUR EXACT WORKING CODE
+  // 4. Patient Creation (EXACT COPY with dynamic data in .fill() only)
   await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click();
   await page.getByText('New Patient', { exact: true }).click();
   await page.locator('div').filter({ hasText: /^Enter Patient Details$/ }).getByRole('img').click();
   await page.getByRole('button', { name: 'Next' }).click();
 
-  // Fill patient details with generated data
+  // Fill patient details - ONLY changed the .fill() values
   await page.locator('form').filter({ hasText: 'Provider Group' }).getByLabel('Open').click();
   await page.getByRole('textbox', { name: 'First Name *' }).click();
-  await page.getByRole('textbox', { name: 'First Name *' }).fill(patientData.firstName);
+  await page.getByRole('textbox', { name: 'First Name *' }).fill(patient.firstName); // Changed
   await page.getByRole('textbox', { name: 'Last Name *' }).click();
-  await page.getByRole('textbox', { name: 'Last Name *' }).fill(patientData.lastName);
+  await page.getByRole('textbox', { name: 'Last Name *' }).fill(patient.lastName); // Changed
   await page.getByRole('textbox', { name: 'Date Of Birth *' }).click();
-  await page.getByRole('textbox', { name: 'Date Of Birth *' }).fill(patientData.dateOfBirth);
+  await page.getByRole('textbox', { name: 'Date Of Birth *' }).fill(patient.dateOfBirth); // Changed
   await page.getByRole('combobox', { name: 'Gender *' }).click();
   await page.getByRole('option', { name: 'Male', exact: true }).click();
   await page.locator('form').filter({ hasText: 'Time Zone *Time Zone *' }).getByLabel('Open').click();
   await page.getByRole('option', { name: 'Alaska Standard Time (UTC -9)' }).click();
   await page.getByRole('textbox', { name: 'Mobile Number *' }).click();
-  await page.getByRole('textbox', { name: 'Mobile Number *' }).fill(patientData.mobileNumber);
+  await page.getByRole('textbox', { name: 'Mobile Number *' }).fill(patient.mobileNumber); // Changed
   await page.getByRole('textbox', { name: 'Email *' }).click();
-  await page.getByRole('textbox', { name: 'Email *' }).fill(patientData.email);
+  await page.getByRole('textbox', { name: 'Email *' }).fill(patient.email); // Changed
   await page.getByRole('button', { name: 'Save' }).click();
 
-  // 5. Appointment Booking
+  // 5. Appointment Booking (EXACT COPY but need to handle dynamic patient name)
   await page.getByRole('banner').getByTestId('ExpandMoreIcon').click();
   await page.getByText('New Appointment').click();
 
-  // Fill appointment details with smart patient selection
+  // Fill appointment details
   await page.getByRole('combobox', { name: 'Patient Name *' }).click();
   
-  // Smart patient selection using birth date pattern
-  const patientBirthDate = patientData.dateOfBirth.split('-');
-  const birthDay = parseInt(patientBirthDate[1], 10);
-  const birthMonth = parseInt(patientBirthDate[0], 10);
+  // Convert patient birth date to expected format (MM-DD-YYYY to "DD Mon")
+  const birthParts = patient.dateOfBirth.split('-');
+  const day = parseInt(birthParts[1], 10); // Remove leading zero
+  const monthNum = parseInt(birthParts[0], 10);
   const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  const expectedPattern = `${patientData.firstName} ${patientData.lastName} ${birthDay} ${monthNames[birthMonth]}`;
+  const expectedPatientName = `${patient.firstName} ${patient.lastName} ${day} ${monthNames[monthNum]}`;
   
-  try {
-    await page.getByRole('option', { name: expectedPattern }).click();
-    console.log(`✅ Selected patient: ${expectedPattern}`);
-  } catch (error) {
-    // Fallback to partial match
-    await page.getByRole('option').filter({ hasText: patientData.firstName }).first().click();
-    console.log(`✅ Selected patient using partial match: ${patientData.firstName}`);
-  }
-
+  await page.getByRole('option', { name: expectedPatientName }).click(); // Changed to dynamic
   await page.getByRole('combobox', { name: 'Appointment Type *' }).click();
   await page.getByRole('option', { name: 'New Patient Visit' }).click();
   await page.getByRole('textbox', { name: 'Reason For Visit *' }).click();
@@ -275,9 +221,9 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('option', { name: 'Alaska Standard Time (GMT -09' }).click();
   await page.getByRole('button', { name: 'Telehealth' }).click();
 
-  // Select provider for appointment
+  // Select provider and schedule appointment
   await page.getByRole('combobox', { name: 'Provider *' }).click();
-  await page.getByRole('option', { name: providerData.fullName }).first().click(); // Use .first() for duplicates
+  await page.getByRole('option', { name: provider.fullName }).click(); // Changed
   await page.getByRole('button', { name: 'View availability' }).click({
     button: 'right'
   });
@@ -286,7 +232,9 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('button', { name: '06:15 AM - 06:45 AM' }).click();
   await page.getByRole('button', { name: 'Save And Close' }).click();
 
+  // Log success
   console.log('🎉 Test completed successfully!');
-  console.log(`✅ Provider: ${providerData.fullName} (${providerData.email})`);
-  console.log(`✅ Patient: ${patientData.fullName} (${patientData.email})`);
+  console.log(`✅ Provider: ${provider.fullName} (${provider.email})`);
+  console.log(`✅ Patient: ${patient.fullName} (${patient.email})`);
+  console.log(`✅ Expected patient name format: ${expectedPatientName}`);
 });
