@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Optimized Playwright configuration for fast CI/CD execution
+ * Optimized Playwright configuration for reliable execution
  */
 export default defineConfig({
   testDir: './tests',
@@ -11,10 +11,10 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   
   // Minimal retries for faster feedback
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 1,
   
   // Optimal worker count
-  workers: process.env.CI ? 2 : undefined,
+  workers: process.env.CI ? 2 : 1,
   
   // Fast reporting configuration
   reporter: process.env.CI ? [
@@ -27,9 +27,9 @@ export default defineConfig({
   ],
   
   // Reasonable timeouts
-  timeout: 120000,  // 2 minutes max per test
+  timeout: 60000,   // 1 minute max per test
   expect: {
-    timeout: 10000, // 10 seconds for assertions
+    timeout: 15000, // 15 seconds for assertions
   },
   
   use: {
@@ -45,15 +45,20 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     // Faster timeouts
-    actionTimeout: 15000,     // 15 seconds
+    actionTimeout: 20000,     // 20 seconds
     navigationTimeout: 30000, // 30 seconds
+    
+    // Force headless mode for better stability
+    headless: true,
     
     // Optimized browser options
     launchOptions: {
-      headless: process.env.CI ? true : false,
+      // Always headless for consistency
+      headless: true,
       // Remove slowMo for faster execution
       args: [
         '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
         '--disable-dev-shm-usage',
         '--no-sandbox',
         '--disable-setuid-sandbox',
@@ -68,7 +73,10 @@ export default defineConfig({
         '--no-default-browser-check',
         '--no-first-run',
         '--mute-audio',
-        '--disable-background-networking'
+        '--disable-background-networking',
+        '--disable-blink-features=AutomationControlled',
+        '--disable-component-extensions-with-background-pages',
+        '--disable-ipc-flooding-protection'
       ]
     }
   },
