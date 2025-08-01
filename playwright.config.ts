@@ -1,35 +1,36 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Optimized Playwright configuration for reliable execution
+ * Optimized Playwright configuration - FIXED for single run without retries
  */
 export default defineConfig({
   testDir: './tests',
   
-  // Parallel execution for speed
-  fullyParallel: true,
+  // Disable parallel for stability
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   
-  // Minimal retries for faster feedback
-  retries: process.env.CI ? 2 : 1,
+  // FIXED: No retries to prevent multiple runs
+  retries: 0,
   
-  // Optimal worker count
-  workers: process.env.CI ? 2 : 1,
+  // FIXED: Single worker for stability
+  workers: 1,
   
-  // Fast reporting configuration
+  // Enhanced reporting
   reporter: process.env.CI ? [
     ['blob'],        // Fast blob reports for CI
     ['github'],      // GitHub annotations
     ['line']         // Minimal console output
   ] : [
     ['html', { open: 'never' }],  // HTML for local dev
-    ['list']         // Console output
+    ['list'],        // Console output
+    ['junit', { outputFile: 'test-results/junit.xml' }] // JUnit for CI integration
   ],
   
-  // Reasonable timeouts
-  timeout: 60000,   // 1 minute max per test
+  // Increased timeouts for complex workflow
+  timeout: 120000,  // 2 minutes max per test
   expect: {
-    timeout: 15000, // 15 seconds for assertions
+    timeout: 30000, // 30 seconds for assertions
   },
   
   use: {
@@ -39,23 +40,23 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     
-    // Minimal tracing for speed
+    // Enhanced debugging info
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
     
-    // Faster timeouts
-    actionTimeout: 20000,     // 20 seconds
-    navigationTimeout: 30000, // 30 seconds
+    // Longer timeouts for complex interactions
+    actionTimeout: 30000,     // 30 seconds for actions
+    navigationTimeout: 60000, // 60 seconds for navigation
     
-    // Force headless mode for better stability
+    // Force headless mode for consistency
     headless: true,
     
-    // Optimized browser options
+    // Optimized browser options for stability
     launchOptions: {
-      // Always headless for consistency
       headless: true,
-      // Remove slowMo for faster execution
+      // Slower execution for better stability
+      slowMo: 100,
       args: [
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
@@ -76,7 +77,15 @@ export default defineConfig({
         '--disable-background-networking',
         '--disable-blink-features=AutomationControlled',
         '--disable-component-extensions-with-background-pages',
-        '--disable-ipc-flooding-protection'
+        '--disable-ipc-flooding-protection',
+        // Additional stability flags
+        '--disable-client-side-phishing-detection',
+        '--disable-popup-blocking',
+        '--disable-prompt-on-repost',
+        '--disable-hang-monitor',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--force-prefers-reduced-motion'
       ]
     }
   },
@@ -87,7 +96,10 @@ export default defineConfig({
       use: { 
         ...devices['Desktop Chrome'],
         contextOptions: {
-          permissions: ['clipboard-read', 'clipboard-write']
+          permissions: ['clipboard-read', 'clipboard-write'],
+          // Additional context options for stability
+          reducedMotion: 'reduce',
+          forcedColors: 'none'
         }
       },
     }

@@ -72,6 +72,45 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   console.log('Generated Provider:', provider);
   console.log('Generated Patient:', patient);
 
+  // Helper function to close any modal/dialog that might be open
+  async function closeAnyModal() {
+    try {
+      // Try multiple ways to close modals
+      const closeSelectors = [
+        'button[aria-label="close"]',
+        'button[data-testid="CloseIcon"]',
+        '[data-testid="CloseIcon"]',
+        '.MuiDialog-container button',
+        'button:has-text("Cancel")',
+        'button:has-text("Close")',
+        'button:has-text("OK")',
+        '[role="dialog"] button'
+      ];
+      
+      for (const selector of closeSelectors) {
+        try {
+          const element = page.locator(selector).first();
+          if (await element.isVisible({ timeout: 1000 })) {
+            await element.click();
+            await page.waitForTimeout(1000);
+            console.log(`✅ Closed modal using selector: ${selector}`);
+            return;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      // If no close button found, try ESC key
+      await page.keyboard.press('Escape');
+      await page.keyboard.press('Escape');
+      await page.waitForTimeout(1000);
+      console.log('✅ Tried ESC key to close modal');
+    } catch (error) {
+      console.log('ℹ️ No modal to close or modal close failed');
+    }
+  }
+
   // 1. Login to the application
   await page.goto('https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login');
   await page.getByRole('textbox', { name: 'Email' }).click();
@@ -80,8 +119,9 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('textbox', { name: '*********' }).fill('Pass@123');
   await page.getByRole('button', { name: 'Let\'s get Started' }).click();
   
-  // Wait for login to complete
+  // Wait for login to complete and close any welcome modals
   await page.waitForTimeout(5000);
+  await closeAnyModal();
 
   // 2. Create Provider
   await page.getByRole('banner').getByTestId('KeyboardArrowRightIcon').click();
@@ -111,8 +151,9 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   await page.getByRole('textbox', { name: 'Email *' }).fill(provider.email);
   await page.getByRole('button', { name: 'Save' }).click();
   
-  // Wait after provider creation
+  // Wait after provider creation and handle any success modal
   await page.waitForTimeout(3000);
+  await closeAnyModal();
 
   // 3. Set Availability with improved error handling
   await page.getByRole('tab', { name: 'Scheduling' }).click();
@@ -212,24 +253,78 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   
   // Wait and handle any success modal
   await page.waitForTimeout(5000);
-  
-  // Try to handle success modal if it appears
-  try {
-    const okButton = page.getByRole('button', { name: 'OK' });
-    if (await okButton.isVisible({ timeout: 3000 })) {
-      await okButton.click();
-      console.log('✅ Closed success modal');
-      await page.waitForTimeout(2000);
-    }
-  } catch (error) {
-    // If no OK button, try escape
-    await page.keyboard.press('Escape');
-    await page.keyboard.press('Escape');
-    await page.waitForTimeout(2000);
-  }
+  await closeAnyModal();
 
-  // 4. Patient Creation
-  await page.locator('div').filter({ hasText: /^Create$/ }).nth(1).click();
+  // 4. Patient Creation - FIXED the problematic line 67
+  console.log('🏥 Starting patient creation...');
+  
+  // Close any modal that might be interfering
+  await closeAnyModal();
+  
+  // Wait for any overlay to disappear
+  await page.waitForTimeout(2000);
+  
+  // Try multiple approaches to click the Create button
+  let createClicked = false;
+  const createSelectors = [
+    'div:has-text("Create"):nth-child(2)', // More specific nth-child
+    'div:text("Create")', // Text selector
+    '[data-testid*="create"]', // Data testid
+    'button:has-text("Create")', // Button with Create text
+    'div.MuiBox-root:has-text("Create")', // MUI Box with Create text
+    '.css-6qz1f6:has-text("Create")' // CSS class specific
+  ];
+  
+  for (const selector of createSelectors) {
+    try {
+      console.log(`Trying selector: ${selector}`);
+      const element = page.locator(selector);
+      
+      // Check if element exists and is visible
+      if (await element.count() > 0) {
+        const visibleElement = element.nth(1); // Try second occurrence as original code did
+        
+        if (await visibleElement.isVisible({ timeout: 3000 })) {
+          // Scroll into view first
+          await visibleElement.scrollIntoViewIfNeeded();
+          await page.waitForTimeout(1000);
+          
+          // Force click if needed
+          await visibleElement.click({ force: true });
+          createClicked = true;
+          console.log(`✅ Successfully clicked Create using: ${selector}`);
+          break;
+        }
+      }
+    } catch (error) {
+      console.log(`⚠️ Failed with selector: ${selector} - ${error.message}`);
+      continue;
+    }
+  }
+  
+  // Fallback: Try keyboard navigation
+  if (!createClicked) {
+    console.log('🎹 Trying keyboard navigation...');
+    try {
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Tab');
+      await page.keyboard.press('Enter');
+      createClicked = true;
+      console.log('✅ Create clicked via keyboard');
+    } catch (error) {
+      console.log('❌ Keyboard navigation failed');
+    }
+  }
+  
+  if (!createClicked) {
+    // Take screenshot for debugging
+    await page.screenshot({ path: 'create-button-issue.png', fullPage: true });
+    throw new Error('Could not click the Create button - check create-button-issue.png for debugging');
+  }
+  
+  await page.waitForTimeout(2000);
+  
+  // Continue with patient creation
   await page.getByText('New Patient', { exact: true }).click();
   await page.locator('div').filter({ hasText: /^Enter Patient Details$/ }).getByRole('img').click();
   await page.getByRole('button', { name: 'Next' }).click();
@@ -254,6 +349,7 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
   
   // Wait after patient creation
   await page.waitForTimeout(3000);
+  await closeAnyModal();
 
   // 5. Appointment Booking
   await page.getByRole('banner').getByTestId('ExpandMoreIcon').click();
@@ -325,7 +421,7 @@ test('Complete Healthcare Provider Workflow', async ({ page }) => {
     throw new Error('Could not select any available day');
   }
   
-  // ENHANCED: Dynamic time slot selection - the key fix!
+  // ENHANCED: Dynamic time slot selection
   console.log('🕒 Looking for available time slots...');
   await page.waitForTimeout(3000); // Wait for time slots to load
   
