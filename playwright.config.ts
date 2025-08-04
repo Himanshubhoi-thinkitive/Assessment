@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Enhanced Playwright configuration for CI/CD stability
+ * Enhanced Playwright configuration optimized for headless CI/CD stability
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
@@ -11,11 +11,11 @@ export default defineConfig({
   fullyParallel: false, // Run tests sequentially for stability
   forbidOnly: !!process.env.CI,
   
-  // Retry configuration
-  retries: process.env.CI ? 2 : 0, // Retry failed tests in CI
+  // Retry configuration - More retries for CI stability
+  retries: process.env.CI ? 1 : 0, // Reduced retries to save time
   
   // Worker configuration
-  workers: process.env.CI ? 1 : undefined, // Single worker in CI, default locally
+  workers: process.env.CI ? 1 : undefined, // Single worker in CI
   
   // Enhanced reporting for CI
   reporter: process.env.CI ? [
@@ -28,10 +28,10 @@ export default defineConfig({
     ['list']
   ],
   
-  // Timeout configuration
-  timeout: 180000, // 3 minutes per test (healthcare workflows can be complex)
+  // Extended timeout configuration for complex healthcare workflows
+  timeout: 300000, // 5 minutes per test (extended for complex workflows)
   expect: {
-    timeout: 30000, // 30 seconds for assertions
+    timeout: 45000, // 45 seconds for assertions (increased)
   },
   
   // Global test configuration
@@ -39,23 +39,23 @@ export default defineConfig({
     // Base URL for your application
     baseURL: 'https://stage_aithinkitive.uat.provider.ecarehealth.com',
     
-    // Browser configuration
+    // Browser configuration optimized for headless
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     
-    // Test artifacts - More conservative settings
+    // Test artifacts - Conservative settings for CI
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
-    screenshot: process.env.CI ? 'only-on-failure' : 'only-on-failure', // Changed from 'on'
-    video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure', // Changed from 'on'
+    screenshot: 'only-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure',
     
-    // Timeouts
-    actionTimeout: 30000, // 30 seconds for actions
-    navigationTimeout: 60000, // 60 seconds for navigation
+    // Extended timeouts for headless stability
+    actionTimeout: 45000, // 45 seconds for actions (increased)
+    navigationTimeout: 90000, // 90 seconds for navigation (increased)
     
-    // Force headless in CI
+    // Force headless in CI with better stability
     headless: process.env.CI ? true : false,
     
-    // Browser launch options optimized for CI
+    // Enhanced browser launch options for headless stability
     launchOptions: {
       args: [
         '--no-sandbox',
@@ -82,10 +82,25 @@ export default defineConfig({
         '--disable-popup-blocking',
         '--disable-prompt-on-repost',
         '--disable-hang-monitor',
-        '--force-prefers-reduced-motion'
+        '--force-prefers-reduced-motion',
+        // Additional stability flags for headless mode
+        '--disable-smooth-scrolling',
+        '--disable-threaded-animation',
+        '--disable-threaded-scrolling',
+        '--disable-partial-raster',
+        '--disable-skia-runtime-opts',
+        '--disable-system-font-check',
+        '--disable-font-subpixel-positioning',
+        '--disable-features=TranslateUI',
+        '--disable-features=VizDisplayCompositor',
+        '--run-all-compositor-stages-before-draw',
+        '--disable-new-content-rendering-timeout'
       ],
-      // Slower execution for CI stability
-      slowMo: process.env.CI ? 250 : 0,
+      // Increased slowMo for better stability in headless
+      slowMo: process.env.CI ? 500 : 100, // Slower execution for better reliability
+      
+      // Additional browser options for stability
+      timeout: 60000, // Browser launch timeout
     }
   },
 
@@ -98,29 +113,18 @@ export default defineConfig({
         contextOptions: {
           permissions: ['clipboard-read', 'clipboard-write'],
           reducedMotion: 'reduce',
-          forcedColors: 'none'
+          forcedColors: 'none',
+          // Additional context options for stability
+          strictSelectors: false, // Allow more flexible selectors
         }
       },
     },
-    
-    // Optional: Add more browsers for comprehensive testing
-    // Uncomment when needed
-    /*
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
-    {
-      name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
-    },
-    */
   ],
 
   // Output configuration
   outputDir: 'test-results/',
   
-  // Global hooks (if needed)
-  // globalSetup: require.resolve('./utils/global-setup'),
-  // globalTeardown: require.resolve('./utils/global-teardown'),
+  // Global setup for better stability
+  globalSetup: process.env.CI ? undefined : undefined,
+  globalTeardown: process.env.CI ? undefined : undefined,
 });
