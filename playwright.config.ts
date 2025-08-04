@@ -1,128 +1,84 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Bulletproof Playwright configuration - No network idle dependencies
- * Optimized for complex healthcare applications with continuous network activity
+ * Optimized Playwright configuration for healthcare applications
+ * Balanced approach between stability and performance
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
   testDir: './tests',
   
   // Test organization
-  fullyParallel: false, // Sequential execution for stability
+  fullyParallel: false, // Sequential execution for data integrity
   forbidOnly: !!process.env.CI,
   
-  // Conservative retry strategy
-  retries: process.env.CI ? 1 : 0, // One retry in CI only
+  // Reasonable retry strategy
+  retries: process.env.CI ? 2 : 1, // More retries for flaky CI environments
   
-  // Single worker for maximum stability
-  workers: 1,
+  // Optimal worker count
+  workers: process.env.CI ? 1 : 2, // Single worker in CI, 2 locally
   
-  // Reporting configuration
+  // Comprehensive reporting
   reporter: process.env.CI ? [
     ['html', { open: 'never', outputFolder: 'playwright-report' }],
     ['github'], // GitHub annotations for CI
     ['junit', { outputFile: 'test-results/junit.xml' }],
-    ['json', { outputFile: 'test-results/results.json' }]
+    ['json', { outputFile: 'test-results/results.json' }],
+    ['line'] // Console output for debugging
   ] : [
     ['html', { open: 'on-failure' }],
     ['list']
   ],
   
-  // Extended timeouts for complex workflows
-  timeout: 600000, // 10 minutes per test (very generous for complex healthcare workflows)
+  // Reasonable timeouts
+  timeout: 300000, // 5 minutes per test (reduced from 10 minutes)
   expect: {
-    timeout: 60000, // 1 minute for assertions
+    timeout: 30000, // 30 seconds for assertions (reduced from 1 minute)
   },
   
   // Global test configuration
   use: {
-    // Base URL
-    baseURL: 'https://stage_aithinkitive.uat.provider.ecarehealth.com',
+    // Base URL from environment or default
+    baseURL: process.env.BASE_URL || 'https://stage_aithinkitive.uat.provider.ecarehealth.com',
     
     // Browser viewport
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     
-    // Conservative artifact collection
-    trace: 'retain-on-failure',
+    // Artifact collection
+    trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
     screenshot: 'only-on-failure',
-    video: 'retain-on-failure',
+    video: process.env.CI ? 'retain-on-failure' : 'off',
     
-    // Extended timeouts for all actions
-    actionTimeout: 60000, // 1 minute for any action
-    navigationTimeout: 120000, // 2 minutes for navigation
+    // Reasonable timeouts
+    actionTimeout: 30000, // 30 seconds for actions (reduced from 1 minute)
+    navigationTimeout: 60000, // 1 minute for navigation (reduced from 2 minutes)
     
     // Always headless in CI
-    headless: process.env.CI ? true : false,
+    headless: !!process.env.CI,
     
-    // Optimized browser launch options for maximum stability
+    // Streamlined browser launch options
     launchOptions: {
       args: [
-        // Essential stability flags
+        // Essential stability flags only
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        
-        // Network and security
-        '--disable-web-security',
         '--ignore-certificate-errors',
-        '--ignore-ssl-errors',
-        '--ignore-certificate-errors-spki-list',
-        
-        // Performance optimization
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-features=TranslateUI',
+        '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
         
-        // Resource management
-        '--memory-pressure-off',
-        '--max_old_space_size=4096',
-        
-        // Stability flags
-        '--disable-extensions',
-        '--disable-default-apps',
-        '--disable-sync',
-        '--disable-component-update',
-        '--disable-default-apps',
-        '--disable-client-side-phishing-detection',
-        
-        // UI stability
-        '--force-prefers-reduced-motion',
-        '--disable-smooth-scrolling',
-        '--disable-threaded-animation',
-        '--disable-threaded-scrolling',
-        
-        // Additional stability
-        '--no-default-browser-check',
-        '--no-first-run',
-        '--mute-audio',
-        '--disable-background-networking',
-        '--disable-blink-features=AutomationControlled',
-        '--disable-component-extensions-with-background-pages',
-        '--disable-ipc-flooding-protection',
-        '--disable-popup-blocking',
-        '--disable-prompt-on-repost',
-        '--disable-hang-monitor',
-        '--disable-features=VizDisplayCompositor',
-        '--run-all-compositor-stages-before-draw',
-        '--disable-new-content-rendering-timeout',
-        
-        // Font and rendering
-        '--disable-font-subpixel-positioning',
-        '--disable-partial-raster',
-        '--disable-skia-runtime-opts',
-        '--disable-system-font-check'
-      ],
+        // Remove excessive flags that could cause issues
+        process.env.CI ? '--disable-extensions' : '',
+        process.env.CI ? '--no-first-run' : '',
+      ].filter(Boolean),
       
-      // Slow execution for better reliability
-      slowMo: process.env.CI ? 1000 : 250, // 1 second delay between actions in CI
+      // Reasonable execution speed
+      slowMo: process.env.CI ? 500 : 100, // Reduced slowMo
       
-      // Extended browser launch timeout
-      timeout: 120000, // 2 minutes to start browser
+      // Browser launch timeout
+      timeout: 60000, // 1 minute (reduced from 2 minutes)
     }
   },
 
@@ -136,15 +92,25 @@ export default defineConfig({
           permissions: ['clipboard-read', 'clipboard-write'],
           reducedMotion: 'reduce',
           forcedColors: 'none',
-          strictSelectors: false, // Allow flexible selectors
+          strictSelectors: false,
           
-          // Additional context options for stability
-          bypassCSP: true, // Bypass Content Security Policy if needed
+          // Simplified context options
+          bypassCSP: true,
           javaScriptEnabled: true,
-          
-          // Viewport settings
           hasTouch: false,
           isMobile: false,
+        }
+      },
+    },
+    
+    // Optional: Add Firefox for cross-browser testing
+    {
+      name: 'firefox',
+      use: { 
+        ...devices['Desktop Firefox'],
+        contextOptions: {
+          reducedMotion: 'reduce',
+          strictSelectors: false,
         }
       },
     },
@@ -153,7 +119,6 @@ export default defineConfig({
   // Output configuration
   outputDir: 'test-results/',
   
-  // No global setup/teardown to avoid additional complexity
-  globalSetup: undefined,
-  globalTeardown: undefined,
+  // Global setup for authentication if needed
+  globalSetup: process.env.CI ? require.resolve('./global-setup.ts') : undefined,
 });

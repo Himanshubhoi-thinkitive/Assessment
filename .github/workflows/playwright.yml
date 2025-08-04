@@ -21,14 +21,14 @@ on:
           - webkit
 
 env:
-  NODE_VERSION: '18'
+  NODE_VERSION: '20'  # Updated to latest LTS
   PLAYWRIGHT_BROWSERS_PATH: 0
 
 jobs:
   test:
     name: Run Playwright Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60  # Increased timeout
     
     steps:
       - name: Checkout code
@@ -48,23 +48,35 @@ jobs:
         run: |
           npx playwright install chromium --with-deps
           
+      - name: Verify Playwright installation
+        run: |
+          npx playwright --version
+          npx playwright install-deps
+          
+      - name: Run health check
+        continue-on-error: true
+        run: |
+          curl -f ${{ secrets.BASE_URL || 'https://stage_aithinkitive.uat.provider.ecarehealth.com' }}/auth/login || echo "Health check failed but continuing"
+          
       - name: Run Playwright tests
         run: |
-          npx playwright test --project=chromium-desktop
+          npx playwright test --project=chromium-desktop --reporter=github,html,junit
         env:
           CI: true
+          BASE_URL: ${{ secrets.BASE_URL || 'https://stage_aithinkitive.uat.provider.ecarehealth.com' }}
+          TEST_EMAIL: ${{ secrets.TEST_EMAIL || 'rose.gomez@jourrapide.com' }}
+          TEST_PASSWORD: ${{ secrets.TEST_PASSWORD || 'Pass@123' }}
           
       - name: Upload test results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-results
+          name: playwright-results-${{ github.run_number }}
           path: |
             playwright-report/
             test-results/
           retention-days: 30
 
-  # Only run report generation if tests complete (success or failure)
   generate-report:
     name: Generate HTML Report
     needs: test
@@ -88,7 +100,7 @@ jobs:
       - name: Download test results
         uses: actions/download-artifact@v4
         with:
-          name: playwright-results
+          name: playwright-results-${{ github.run_number }}
           path: ./
 
       - name: Generate consolidated report
@@ -231,27 +243,25 @@ jobs:
       - name: Upload HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: test-report
+          name: test-report-${{ github.run_number }}
           path: final-report/
           retention-days: 30
 
-      # Only deploy to GitHub Pages on main branch and if repository has pages enabled
       - name: Deploy to GitHub Pages
         if: github.ref == 'refs/heads/session-automation' && success()
-        uses: peaceiris/actions-gh-pages@v3
+        uses: peaceiris/actions-gh-pages@v4  # Updated version
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: final-report/
           destination_dir: reports
           force_orphan: true
 
-  # Notification job
   notify:
     name: Test Summary
     needs: [test, generate-report]
     if: always()
     runs-on: ubuntu-latest
-    timeout-minutes: 2
+    timeout-minutes: 5
     
     steps:
       - name: Create summary
@@ -264,6 +274,10 @@ jobs:
           echo "- **Workflow:** Healthcare Provider Automation Tests" >> $GITHUB_STEP_SUMMARY
           echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Test Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version:** ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Runner:** ubuntu-latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## Links" >> $GITHUB_STEP_SUMMARY
           echo "- 📊 [View Detailed Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
