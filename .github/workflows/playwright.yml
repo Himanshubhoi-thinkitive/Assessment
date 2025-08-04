@@ -13,10 +13,10 @@ on:
       browser:
         description: 'Browser to run tests on'
         required: false
-        default: 'chromium'
+        default: 'chromium-desktop'
         type: choice
         options:
-          - chromium
+          - chromium-desktop
           - firefox
           - webkit
 
@@ -50,7 +50,7 @@ jobs:
           
       - name: Run Playwright tests
         run: |
-          npx playwright test --project=chromium
+          npx playwright test --project=chromium-desktop
         env:
           CI: true
           

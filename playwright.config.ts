@@ -43,10 +43,10 @@ export default defineConfig({
     viewport: { width: 1280, height: 720 },
     ignoreHTTPSErrors: true,
     
-    // Test artifacts
+    // Test artifacts - More conservative settings
     trace: process.env.CI ? 'retain-on-failure' : 'on-first-retry',
-    screenshot: process.env.CI ? 'only-on-failure' : 'on',
-    video: process.env.CI ? 'retain-on-failure' : 'on',
+    screenshot: process.env.CI ? 'only-on-failure' : 'only-on-failure', // Changed from 'on'
+    video: process.env.CI ? 'retain-on-failure' : 'retain-on-failure', // Changed from 'on'
     
     // Timeouts
     actionTimeout: 30000, // 30 seconds for actions
@@ -120,15 +120,7 @@ export default defineConfig({
   // Output configuration
   outputDir: 'test-results/',
   
-  // Global hooks
-  globalSetup: process.env.CI ? undefined : undefined, // Add global setup if needed
-  globalTeardown: process.env.CI ? undefined : undefined, // Add global teardown if needed
-  
-  // Web server (if you need to start a local server)
-  // webServer: {
-  //   command: 'npm run start',
-  //   port: 3000,
-  //   timeout: 120 * 1000,
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  // Global hooks (if needed)
+  // globalSetup: require.resolve('./utils/global-setup'),
+  // globalTeardown: require.resolve('./utils/global-teardown'),
 });
