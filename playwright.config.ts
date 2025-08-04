@@ -119,6 +119,7 @@ export default defineConfig({
   // Output configuration
   outputDir: 'test-results/',
   
-  // Global setup for authentication if needed
-  globalSetup: process.env.CI ? require.resolve('./global-setup.ts') : undefined,
+  // NO global setup to avoid the missing file error
+  // globalSetup: undefined,
+  // globalTeardown: undefined,
 });
