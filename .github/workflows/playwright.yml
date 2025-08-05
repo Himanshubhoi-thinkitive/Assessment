@@ -1,0 +1,722 @@
+name: Healthcare Provider Automation Tests - Enhanced
+
+on:
+  push:
+    branches: [ session-automation, main, master ]
+  pull_request:
+    branches: [ session-automation, main, master ]
+  schedule:
+    # Run tests daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+    inputs:
+      browser:
+        description: 'Browser to run tests on'
+        required: false
+        default: 'chromium-desktop'
+        type: choice
+        options:
+          - chromium-desktop
+          - firefox
+          - webkit
+      send_email:
+        description: 'Send email report'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  NODE_VERSION: '20'
+  PLAYWRIGHT_BROWSERS_PATH: 0
+
+jobs:
+  test:
+    name: Run Playwright Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      test-result: ${{ steps.test-execution.outcome }}
+      total-tests: ${{ steps.test-summary.outputs.total }}
+      passed-tests: ${{ steps.test-summary.outputs.passed }}
+      failed-tests: ${{ steps.test-summary.outputs.failed }}
+      execution-time: ${{ steps.test-summary.outputs.duration }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Clean npm cache
+        run: npm cache clean --force
+
+      - name: Remove node_modules and package-lock.json
+        run: |
+          rm -rf node_modules
+          rm -f package-lock.json
+
+      - name: Install dependencies with fresh lock file
+        run: |
+          npm install --prefer-offline --no-audit --no-fund
+          
+      - name: Verify package-lock.json is in sync
+        run: |
+          npm ci --dry-run || (echo "Lock file still out of sync, regenerating..." && npm install --package-lock-only)
+          
+      - name: Install Playwright browsers
+        run: |
+          npx playwright install chromium --with-deps
+          
+      - name: Verify Playwright installation
+        run: |
+          npx playwright --version
+          npx playwright install-deps chromium
+          
+      - name: Run health check
+        continue-on-error: true
+        run: |
+          curl -f https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login || echo "Health check failed but continuing"
+          
+      - name: Run Playwright tests
+        id: test-execution
+        run: |
+          npx playwright test --project=chromium-desktop --reporter=github,html,junit,json
+        env:
+          CI: true
+          BASE_URL: https://stage_aithinkitive.uat.provider.ecarehealth.com
+
+      - name: Parse test results
+        id: test-summary
+        if: always()
+        run: |
+          # Parse JSON results if available
+          if [ -f "test-results/results.json" ]; then
+            echo "Parsing test results from JSON..."
+            
+            # Extract test statistics using jq
+            TOTAL=$(jq -r '.stats.total // 0' test-results/results.json)
+            PASSED=$(jq -r '.stats.passed // 0' test-results/results.json)
+            FAILED=$(jq -r '.stats.failed // 0' test-results/results.json)
+            DURATION=$(jq -r '.stats.duration // 0' test-results/results.json)
+            
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "duration=${DURATION}ms" >> $GITHUB_OUTPUT
+            
+            echo "📊 Test Summary:"
+            echo "  Total: $TOTAL"
+            echo "  Passed: $PASSED"
+            echo "  Failed: $FAILED"
+            echo "  Duration: ${DURATION}ms"
+          else
+            echo "JSON results not found, using defaults"
+            echo "total=0" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "duration=0ms" >> $GITHUB_OUTPUT
+          fi
+          
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-results-${{ github.run_number }}
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 30
+
+  generate-report:
+    name: Generate Enhanced HTML Report
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      report-url: ${{ steps.deploy-report.outputs.page_url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Download test results
+        uses: actions/download-artifact@v4
+        with:
+          name: playwright-results-${{ github.run_number }}
+          path: ./
+
+      - name: Generate enhanced HTML report
+        run: |
+          echo "📊 Generating enhanced test report..."
+          mkdir -p enhanced-report
+          
+          # Get test results
+          TOTAL="${{ needs.test.outputs.total-tests }}"
+          PASSED="${{ needs.test.outputs.passed-tests }}"
+          FAILED="${{ needs.test.outputs.failed-tests }}"
+          DURATION="${{ needs.test.outputs.execution-time }}"
+          TEST_RESULT="${{ needs.test.outputs.test-result }}"
+          
+          # Determine overall status
+          if [ "$TEST_RESULT" = "success" ]; then
+            STATUS_CLASS="status-success"
+            STATUS_ICON="✅"
+            STATUS_TEXT="All Tests Passed"
+            STATUS_COLOR="#48bb78"
+          else
+            STATUS_CLASS="status-error"
+            STATUS_ICON="❌"
+            STATUS_TEXT="Some Tests Failed"
+            STATUS_COLOR="#f56565"
+          fi
+          
+          # Create comprehensive HTML report
+          cat > enhanced-report/index.html << EOF
+          <!DOCTYPE html>
+          <html lang="en">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Healthcare Automation Test Report</title>
+            <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            <style>
+              * { margin: 0; padding: 0; box-sizing: border-box; }
+              
+              body { 
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                padding: 20px;
+                line-height: 1.6;
+              }
+              
+              .container {
+                max-width: 1200px;
+                margin: 0 auto;
+                background: white;
+                border-radius: 20px;
+                box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+                overflow: hidden;
+              }
+              
+              .header {
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                padding: 40px;
+                text-align: center;
+              }
+              
+              .header h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 10px;
+              }
+              
+              .header p {
+                font-size: 1.2rem;
+                opacity: 0.9;
+              }
+              
+              .content {
+                padding: 40px;
+              }
+              
+              .status-section {
+                text-align: center;
+                margin-bottom: 40px;
+              }
+              
+              .status-card {
+                display: inline-block;
+                background: #f8fafc;
+                border: 3px solid $STATUS_COLOR;
+                border-radius: 15px;
+                padding: 30px;
+                margin: 20px 0;
+                min-width: 300px;
+              }
+              
+              .status-icon {
+                font-size: 4rem;
+                margin-bottom: 15px;
+                display: block;
+              }
+              
+              .status-title {
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #2d3748;
+                margin-bottom: 10px;
+              }
+              
+              .metrics-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 20px;
+                margin: 40px 0;
+              }
+              
+              .metric-card {
+                background: #f7fafc;
+                border-radius: 12px;
+                padding: 25px;
+                text-align: center;
+                border-left: 4px solid #4299e1;
+              }
+              
+              .metric-number {
+                font-size: 2.5rem;
+                font-weight: 700;
+                color: #2d3748;
+                display: block;
+              }
+              
+              .metric-label {
+                color: #718096;
+                font-weight: 500;
+                margin-top: 5px;
+              }
+              
+              .details-section {
+                background: #f8fafc;
+                border-radius: 12px;
+                padding: 30px;
+                margin: 30px 0;
+              }
+              
+              .details-title {
+                font-size: 1.5rem;
+                font-weight: 600;
+                color: #2d3748;
+                margin-bottom: 20px;
+                border-bottom: 2px solid #e2e8f0;
+                padding-bottom: 10px;
+              }
+              
+              .details-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 15px;
+              }
+              
+              .detail-item {
+                display: flex;
+                justify-content: space-between;
+                padding: 10px 0;
+                border-bottom: 1px solid #e2e8f0;
+              }
+              
+              .detail-label {
+                font-weight: 500;
+                color: #4a5568;
+              }
+              
+              .detail-value {
+                color: #2d3748;
+                font-family: 'Monaco', 'Consolas', monospace;
+                font-size: 0.9rem;
+              }
+              
+              .links-section {
+                margin-top: 40px;
+                text-align: center;
+              }
+              
+              .button-group {
+                display: flex;
+                gap: 15px;
+                justify-content: center;
+                flex-wrap: wrap;
+              }
+              
+              .btn {
+                display: inline-block;
+                padding: 12px 24px;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: all 0.3s ease;
+                border: none;
+                cursor: pointer;
+              }
+              
+              .btn-primary {
+                background: #4299e1;
+                color: white;
+              }
+              
+              .btn-primary:hover {
+                background: #3182ce;
+                transform: translateY(-2px);
+              }
+              
+              .btn-secondary {
+                background: #718096;
+                color: white;
+              }
+              
+              .btn-secondary:hover {
+                background: #4a5568;
+              }
+              
+              .timestamp {
+                background: #edf2f7;
+                color: #4a5568;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 30px 0;
+                font-family: 'Monaco', 'Consolas', monospace;
+                text-align: center;
+              }
+              
+              .footer {
+                background: #2d3748;
+                color: #a0aec0;
+                padding: 30px;
+                text-align: center;
+              }
+              
+              @media (max-width: 768px) {
+                .container { margin: 10px; border-radius: 10px; }
+                .content { padding: 20px; }
+                .header { padding: 30px 20px; }
+                .header h1 { font-size: 2rem; }
+                .metrics-grid { grid-template-columns: 1fr; }
+                .button-group { flex-direction: column; align-items: center; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🏥 Healthcare Test Report</h1>
+                <p>Automated E2E Testing Results</p>
+              </div>
+              
+              <div class="content">
+                <div class="status-section">
+                  <div class="status-card">
+                    <span class="status-icon">$STATUS_ICON</span>
+                    <div class="status-title">$STATUS_TEXT</div>
+                  </div>
+                </div>
+                
+                <div class="metrics-grid">
+                  <div class="metric-card">
+                    <span class="metric-number">$TOTAL</span>
+                    <div class="metric-label">Total Tests</div>
+                  </div>
+                  <div class="metric-card">
+                    <span class="metric-number" style="color: #48bb78;">$PASSED</span>
+                    <div class="metric-label">Passed</div>
+                  </div>
+                  <div class="metric-card">
+                    <span class="metric-number" style="color: #f56565;">$FAILED</span>
+                    <div class="metric-label">Failed</div>
+                  </div>
+                  <div class="metric-card">
+                    <span class="metric-number">$DURATION</span>
+                    <div class="metric-label">Duration</div>
+                  </div>
+                </div>
+                
+                <div class="details-section">
+                  <h3 class="details-title">📋 Execution Details</h3>
+                  <div class="details-grid">
+                    <div class="detail-item">
+                      <span class="detail-label">Workflow:</span>
+                      <span class="detail-value">${{ github.workflow }} #${{ github.run_number }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Branch:</span>
+                      <span class="detail-value">${{ github.ref_name }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Commit:</span>
+                      <span class="detail-value">${{ github.sha }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Triggered by:</span>
+                      <span class="detail-value">${{ github.event_name }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Actor:</span>
+                      <span class="detail-value">${{ github.actor }}</span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Generated:</span>
+                      <span class="detail-value">$(date -u '+%Y-%m-%d %H:%M:%S UTC')</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="links-section">
+                  <h3 class="details-title">🔗 Quick Links</h3>
+                  <div class="button-group">
+                    <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" class="btn btn-primary">
+                      📊 View Action Details
+                    </a>
+                    <a href="https://github.com/${{ github.repository }}" class="btn btn-secondary">
+                      📁 Repository
+                    </a>
+                    <a href="./playwright-report/" class="btn btn-secondary">
+                      📈 Detailed Report
+                    </a>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="footer">
+                <p>Generated by Healthcare Provider Automation Framework</p>
+                <p>Powered by Playwright & GitHub Actions</p>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+          
+          # Copy existing Playwright report if available
+          if [ -d "playwright-report" ]; then
+            echo "✅ Found Playwright report, copying to enhanced report..."
+            cp -r playwright-report/* enhanced-report/ 2>/dev/null || true
+          fi
+          
+          # Create a simple JSON summary for email
+          cat > enhanced-report/summary.json << EOF
+          {
+            "total": "$TOTAL",
+            "passed": "$PASSED",
+            "failed": "$FAILED",
+            "duration": "$DURATION",
+            "status": "$TEST_RESULT",
+            "workflow": "${{ github.workflow }}",
+            "run_number": "${{ github.run_number }}",
+            "branch": "${{ github.ref_name }}",
+            "commit": "${{ github.sha }}",
+            "actor": "${{ github.actor }}",
+            "timestamp": "$(date -u '+%Y-%m-%d %H:%M:%S UTC')",
+            "report_url": "https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+          
+          echo "✅ Enhanced HTML report generated successfully!"
+
+      - name: Upload enhanced report
+        uses: actions/upload-artifact@v4
+        with:
+          name: enhanced-test-report-${{ github.run_number }}
+          path: enhanced-report/
+          retention-days: 30
+
+  send-email:
+    name: Send Email Report
+    needs: [test, generate-report]
+    if: always() && (github.event.inputs.send_email == 'true' || github.event.inputs.send_email == '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Download enhanced report
+        uses: actions/download-artifact@v4
+        with:
+          name: enhanced-test-report-${{ github.run_number }}
+          path: ./report
+
+      - name: Prepare email content
+        id: email-content
+        run: |
+          # Read summary data
+          if [ -f "./report/summary.json" ]; then
+            TOTAL=$(jq -r '.total' ./report/summary.json)
+            PASSED=$(jq -r '.passed' ./report/summary.json)
+            FAILED=$(jq -r '.failed' ./report/summary.json)
+            DURATION=$(jq -r '.duration' ./report/summary.json)
+            STATUS=$(jq -r '.status' ./report/summary.json)
+          else
+            TOTAL="0"
+            PASSED="0"
+            FAILED="0"
+            DURATION="0ms"
+            STATUS="unknown"
+          fi
+          
+          # Determine email subject and status
+          if [ "$STATUS" = "success" ]; then
+            SUBJECT="✅ Healthcare Tests PASSED - All $TOTAL tests successful"
+            STATUS_EMOJI="✅"
+            STATUS_TEXT="SUCCESS"
+          else
+            SUBJECT="❌ Healthcare Tests FAILED - $FAILED of $TOTAL tests failed"
+            STATUS_EMOJI="❌"
+            STATUS_TEXT="FAILED"
+          fi
+          
+          # Create HTML email content
+          EMAIL_HTML=$(cat << 'EOF'
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <title>Healthcare Test Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+              .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; text-align: center; }
+              .content { padding: 20px; }
+              .status { text-align: center; padding: 20px; border-radius: 8px; margin: 20px 0; }
+              .status-success { background: #d4edda; border: 2px solid #155724; color: #155724; }
+              .status-error { background: #f8d7da; border: 2px solid #721c24; color: #721c24; }
+              .metrics { display: flex; justify-content: space-around; margin: 20px 0; }
+              .metric { text-align: center; padding: 15px; background: #f8f9fa; border-radius: 8px; }
+              .metric-number { font-size: 24px; font-weight: bold; }
+              .details { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
+              .button { background: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block; margin: 10px 5px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>🏥 Healthcare Test Report</h1>
+              <p>Automated Testing Results</p>
+            </div>
+            <div class="content">
+          EOF
+          )
+          
+          # Add status section
+          if [ "$STATUS" = "success" ]; then
+            EMAIL_HTML="$EMAIL_HTML"$(cat << 'EOF'
+              <div class="status status-success">
+                <h2>✅ All Tests Passed!</h2>
+                <p>Great job! All automated tests completed successfully.</p>
+              </div>
+          EOF
+          )
+          else
+            EMAIL_HTML="$EMAIL_HTML"$(cat << 'EOF'
+              <div class="status status-error">
+                <h2>❌ Some Tests Failed</h2>
+                <p>Attention needed: Some tests failed and require investigation.</p>
+              </div>
+          EOF
+          )
+          fi
+          
+          # Add metrics
+          EMAIL_HTML="$EMAIL_HTML"$(cat << EOF
+              <div class="metrics">
+                <div class="metric">
+                  <div class="metric-number">$TOTAL</div>
+                  <div>Total Tests</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-number" style="color: green;">$PASSED</div>
+                  <div>Passed</div>
+                </div>
+                <div class="metric">
+                  <div class="metric-number" style="color: red;">$FAILED</div>
+                  <div>Failed</div>
+                </div>
+              </div>
+              
+              <div class="details">
+                <h3>Execution Details</h3>
+                <p><strong>Workflow:</strong> ${{ github.workflow }} #${{ github.run_number }}</p>
+                <p><strong>Branch:</strong> ${{ github.ref_name }}</p>
+                <p><strong>Duration:</strong> $DURATION</p>
+                <p><strong>Triggered by:</strong> ${{ github.actor }}</p>
+                <p><strong>Timestamp:</strong> $(date -u '+%Y-%m-%d %H:%M:%S UTC')</p>
+              </div>
+              
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}" class="button">
+                  📊 View Detailed Report
+                </a>
+                <a href="https://github.com/${{ github.repository }}" class="button">
+                  📁 View Repository
+                </a>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+          )
+          
+          # Write to files for email sending
+          echo "$SUBJECT" > email_subject.txt
+          echo "$EMAIL_HTML" > email_body.html
+          
+          # Output for next step
+          echo "subject=$SUBJECT" >> $GITHUB_OUTPUT
+          echo "status=$STATUS" >> $GITHUB_OUTPUT
+
+      - name: Send email report
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_USERNAME }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: ${{ steps.email-content.outputs.subject }}
+          html_body: file://email_body.html
+          to: ${{ secrets.EMAIL_TO }}
+          from: Healthcare Test Automation <${{ secrets.EMAIL_USERNAME }}>
+          attachments: ./report/index.html
+
+  summary:
+    name: Test Execution Summary
+    needs: [test, generate-report, send-email]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    steps:
+      - name: Create comprehensive summary
+        run: |
+          echo "# 🏥 Healthcare Test Execution Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Status badges
+          if [ "${{ needs.test.outputs.test-result }}" = "success" ]; then
+            echo "![Status](https://img.shields.io/badge/Tests-PASSED-brightgreen) ![Tests](https://img.shields.io/badge/Total-${{ needs.test.outputs.total-tests }}-blue)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "![Status](https://img.shields.io/badge/Tests-FAILED-red) ![Tests](https://img.shields.io/badge/Total-${{ needs.test.outputs.total-tests }}-blue)" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 📊 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| Metric | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|--------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Total Tests** | ${{ needs.test.outputs.total-tests }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Passed** | ${{ needs.test.outputs.passed-tests }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Failed** | ${{ needs.test.outputs.failed-tests }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Duration** | ${{ needs.test.outputs.execution-time }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | ${{ needs.test.outputs.test-result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🔧 Job Results" >> $GITHUB_STEP_SUMMARY
+          echo "- **Test Execution:** ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Report Generation:** ${{ needs.generate-report.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Email Notification:** ${{ needs.send-email.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 🔗 Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- 📊 [Enhanced HTML Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})" >> $GITHUB_STEP_SUMMARY
+          echo "- 📁 [Repository](https://github.com/${{ github.repository }})" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚙️ [Workflow File](.github/workflows/playwright.yml)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## ℹ️ Environment Info" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node Version:** ${{ env.NODE_VERSION }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch:** ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit:** \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Event:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY

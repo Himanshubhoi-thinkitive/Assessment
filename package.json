@@ -1,0 +1,44 @@
+{
+  "name": "healthcare-automation",
+  "version": "1.0.0",
+  "description": "Healthcare Provider Workflow Automation with Playwright",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headless": "playwright test --project=chromium-desktop",
+    "test:headed": "playwright test --project=chromium-desktop --headed",
+    "test:debug": "playwright test --project=chromium-desktop --debug",
+    "test:ui": "playwright test --project=chromium-desktop --ui",
+    "test:specific": "playwright test tests/final-test.spec.ts",
+    "test:ci": "playwright test --project=chromium-desktop --reporter=github,html,junit",
+    "report": "playwright show-report",
+    "report:open": "playwright show-report --port=9323",
+    "install:browsers": "playwright install chromium --with-deps",
+    "install:all": "npm ci && npm run install:browsers",
+    "clean": "rm -rf test-results playwright-report coverage",
+    "pretest": "npm run clean",
+    "health-check": "curl -f https://stage_aithinkitive.uat.provider.ecarehealth.com/auth/login || exit 1"
+  },
+  "keywords": [
+    "playwright",
+    "automation",
+    "testing",
+    "healthcare",
+    "e2e",
+    "ci/cd"
+  ],
+  "author": "Himanshubhoi-thinkitive",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.54.1",
+    "@types/node": "^20.0.0",
+    "@types/nodemailer": "^6.4.17"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^7.0.5"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "name": "healthcare-automation-framework",
+  "version": "2.0.0",
+  "description": "Enhanced automated testing framework for healthcare provider functionality using Playwright and TypeScript with email reporting",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:ui": "playwright test --ui",
+    "test:email": "playwright test --reporter=./reporters/healthcare-reporter.ts",
+    "install:browsers": "playwright install",
+    "build": "tsc",
+    "clean": "rimraf enhanced-report test-results playwright-report",
+    "lint": "eslint . --ext .ts",
+    "lint:fix": "eslint . --ext .ts --fix",
+    "type-check": "tsc --noEmit"
+  },
+  "keywords": [
+    "playwright",
+    "typescript",
+    "automation",
+    "testing",
+    "e2e",
+    "healthcare",
+    "email-reporting",
+    "ci-cd"
+  ],
+  "author": "Healthcare Test Automation Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "@types/nodemailer": "^6.4.14",
+    "@typescript-eslint/eslint-plugin": "^6.0.0",
+    "@typescript-eslint/parser": "^6.0.0",
+    "eslint": "^8.0.0",
+    "rimraf": "^5.0.0",
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "nodemailer": "^6.9.8"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-organization/healthcare-automation"
+  },
+  "bugs": {
+    "url": "https://github.com/your-organization/healthcare-automation/issues"
+  },
+  "homepage": "https://github.com/your-organization/healthcare-automation#readme"
+}
