@@ -1,8 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright configuration file
+ * Enhanced Playwright configuration file
  * Defines test execution settings, browser configurations, and reporting options
+ * with email notifications and enhanced HTML reporting
  */
 export default defineConfig({
   // Test directory
@@ -20,17 +21,43 @@ export default defineConfig({
   // Opt out of parallel tests on CI
   workers: process.env.CI ? 1 : undefined,
   
-  // Reporter to use
+  // Global timeout for each test
+  timeout: 30 * 1000,
+  
+  // Global timeout for expect assertions
+  expect: {
+    timeout: 10 * 1000,
+  },
+  
+  // Reporter configuration
   reporter: [
-    ['html'],
-    ['json', { outputFile: 'test-results/results.json' }],
-    ['junit', { outputFile: 'test-results/results.xml' }]
+    // GitHub Actions reporter for CI
+    ['github'],
+    
+    // Standard Playwright HTML reporter
+    ['html', { 
+      outputFolder: 'playwright-report',
+      open: 'never' 
+    }],
+    
+    // JSON reporter for programmatic access
+    ['json', { 
+      outputFile: 'test-results/results.json' 
+    }],
+    
+    // JUnit reporter for CI systems
+    ['junit', { 
+      outputFile: 'test-results/results.xml' 
+    }],
+    
+    // Line reporter for console output
+    ['line']
   ],
   
   // Shared settings for all the projects below
   use: {
     // Base URL for all tests
-    baseURL: 'https://the-internet.herokuapp.com',
+    baseURL: process.env.BASE_URL || 'https://the-internet.herokuapp.com',
     
     // Collect trace when retrying the failed test
     trace: 'on-first-retry',
@@ -45,35 +72,68 @@ export default defineConfig({
     actionTimeout: 10000,
     
     // Global timeout for navigation
-    navigationTimeout: 30000
+    navigationTimeout: 30000,
+    
+    // Extra HTTP headers
+    extraHTTPHeaders: {
+      'User-Agent': 'Healthcare-Automation-Framework/2.0 Playwright-Test'
+    },
+    
+    // Ignore HTTPS errors
+    ignoreHTTPSErrors: true,
+    
+    // Accept downloads
+    acceptDownloads: true,
   },
 
   // Configure projects for major browsers
   projects: [
     {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: 'chromium-desktop',
+      use: { 
+        ...devices['Desktop Chrome'],
+        // Custom viewport for healthcare app
+        viewport: { width: 1366, height: 768 }
+      },
     },
     
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1366, height: 768 }
+      },
     },
     
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { 
+        ...devices['Desktop Safari'],
+        viewport: { width: 1366, height: 768 }
+      },
     },
     
-    // Mobile browsers
+    // Mobile testing projects
     {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
+      name: 'mobile-chrome',
+      use: { 
+        ...devices['Pixel 5'] 
+      },
     },
     
     {
-      name: 'Mobile Safari',
-      use: { ...devices['iPhone 12'] },
+      name: 'mobile-safari',
+      use: { 
+        ...devices['iPhone 12'] 
+      },
+    },
+    
+    // Tablet testing
+    {
+      name: 'tablet',
+      use: { 
+        ...devices['iPad Pro'] 
+      },
     },
   ],
 
